@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>チーと言えばギュウ</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .girl {
+      width: 100%;
+      border-radius: 16px;
+      margin-bottom: 16px;
+    }
+
+    .bubble {
+      background: #fff;
+      color: #000;
+      border-radius: 16px;
+      padding: 14px;
+      font-size: 18px;
+      line-height: 1.4;
+      margin-bottom: 20px;
+    }
+
+    .choices button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 14px;
+      font-size: 18px;
+      border-radius: 12px;
+      border: none;
+      background: #222;
+      color: #fff;
+    }
+
+    .choices button:active {
+      background: #444;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- 女の子画像 -->
+    <img src="girl.png" alt="girl" class="girl">
+
+    <!-- 吹き出し -->
+    <div class="bubble">
+      あなたは<br>
+      チー牛ですか？
+    </div>
+
+    <!-- 選択肢 -->
+    <div class="choices">
+      <button onclick="answer('はい')">はい</button>
+      <button onclick="answer('いいえ')">いいえ</button>
+      <button onclick="answer('チー')">チー</button>
+      <button onclick="answer('ギュウ')">ギュウ</button>
+    </div>
+
+  </div>
+
+  <script>
+    function answer(a) {
+      if (a === 'ギュウ') {
+        document.querySelector('.bubble').innerHTML = 'ギュウ';
+      } else {
+        document.querySelector('.bubble').innerHTML = '……';
+      }
+    }
+  </script>
+</body>
+</html>
