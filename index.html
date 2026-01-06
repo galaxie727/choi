@@ -1,89 +1,168 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>チーと言えばギュウ</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2コマ反応テスト</title>
 
   <style>
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", sans-serif;
       background: #111;
       color: #fff;
-      text-align: center;
-      padding: 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont;
     }
 
-    .container {
-      max-width: 420px;
+    .wrap {
+      max-width: 520px;
       margin: 0 auto;
+      padding: 16px;
     }
 
-    .girl {
-      width: 100%;
+    .card {
+      background: #1a1a1a;
       border-radius: 16px;
-      margin-bottom: 16px;
+      padding: 12px;
     }
 
-    .bubble {
-      background: #fff;
-      color: #000;
-      border-radius: 16px;
-      padding: 14px;
-      font-size: 18px;
-      line-height: 1.4;
-      margin-bottom: 20px;
-    }
-
-    .choices button {
-      display: block;
+    img {
       width: 100%;
-      margin: 10px 0;
-      padding: 14px;
-      font-size: 18px;
+      height: auto;
       border-radius: 12px;
-      border: none;
+      display: block;
+      background: #000;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      padding: 14px 10px;
+      border-radius: 12px;
+      border: 1px solid #333;
       background: #222;
       color: #fff;
+      font-size: 16px;
     }
 
-    .choices button:active {
-      background: #444;
+    button:disabled {
+      opacity: 0.5;
+    }
+
+    .note {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-top: 10px;
+      line-height: 1.4;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
+<div class="wrap">
+  <div class="card">
+    <img id="girl" src="base1.png" alt="girl">
 
-    <!-- 女の子画像 -->
-    <img src="girl.png" alt="girl" class="girl">
-
-    <!-- 吹き出し -->
-    <div class="bubble">
-      あなたは<br>
-      チー牛ですか？
-    </div>
-
-    <!-- 選択肢 -->
     <div class="choices">
-      <button onclick="answer('はい')">はい</button>
-      <button onclick="answer('いいえ')">いいえ</button>
-      <button onclick="answer('チー')">チー</button>
-      <button onclick="answer('ギュウ')">ギュウ</button>
+      <button data-choice="はい">はい</button>
+      <button data-choice="いいえ">いいえ</button>
+      <button data-choice="チー">チー</button>
+      <button data-choice="ギュウ">ギュウ</button>
     </div>
 
+    <div class="note">
+      押す → 一拍 → 表情が一瞬変わるかも → 何も言われない
+    </div>
   </div>
+</div>
 
-  <script>
-    function answer(a) {
-      if (a === 'ギュウ') {
-        document.querySelector('.bubble').innerHTML = 'ギュウ';
-      } else {
-        document.querySelector('.bubble').innerHTML = '……';
-      }
+<script>
+  /* ====== 設定 ====== */
+
+  const baseSrc = "base1.png";
+
+  // ウインク候補
+  const reactions = [
+    { src: "winkB.png", weight: 30 }, // 標準
+    { src: "winkC.png", weight: 20 }, // 照れ
+    { src: "winkD.png", weight: 20 }, // 視線
+    { src: "winkE.png", weight: 10 }, // 一瞬
+    { src: null,        weight: 20 }  // 反応なし
+  ];
+
+  const BEAT_MS = 180;   // 一拍
+  const WINK_MS = 400;  // 通常表示時間
+  const SHORT_MS = 220; // winkE or 無反応用
+
+  /* ====== 初期化 ====== */
+
+  const img = document.getElementById("girl");
+  const buttons = document.querySelectorAll("button");
+  let busy = false;
+
+  // 画像プリロード
+  [baseSrc, ...reactions.map(r => r.src).filter(Boolean)]
+    .forEach(src => { const i = new Image(); i.src = src; });
+
+  function disableButtons(v) {
+    buttons.forEach(b => b.disabled = v);
+  }
+
+  /* ====== ユーティリティ ====== */
+
+  function weightedRandom(list) {
+    const total = list.reduce((s, i) => s + i.weight, 0);
+    let r = Math.random() * total;
+    for (const item of list) {
+      if ((r -= item.weight) <= 0) return item;
     }
-  </script>
+    return list[0];
+  }
+
+  function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  /* ====== メイン反応 ====== */
+
+  async function react(choice) {
+    if (busy) return;
+    busy = true;
+    disableButtons(true);
+
+    console.log("choice:", choice);
+
+    // 一拍
+    await sleep(BEAT_MS);
+
+    const reaction = weightedRandom(reactions);
+
+    // 反応なし
+    if (!reaction.src) {
+      await sleep(SHORT_MS);
+    } else {
+      img.src = reaction.src;
+      await sleep(
+        reaction.src === "winkE.png" ? SHORT_MS : WINK_MS
+      );
+      img.src = baseSrc;
+    }
+
+    disableButtons(false);
+    busy = false;
+  }
+
+  /* ====== イベント ====== */
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      react(btn.dataset.choice);
+    });
+  });
+</script>
 </body>
 </html>
