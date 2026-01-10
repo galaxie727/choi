@@ -324,7 +324,31 @@ header{
   margin:0 auto 16px;
   filter:drop-shadow(0 8px 22px rgba(0,0,0,.75));
 }
-  
+/* ===== 返事（speech）を吹き出し内に固定：下に落ちない ===== */
+.bubble{
+  position: relative; /* 追加 */
+}
+
+#speech{
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* 質問文が speech と重ならないように余白を確保 */
+#question{
+  padding-bottom: 60px;
+}
+
+/* ===== RESULTだけ位置を変える（顔に被せない） ===== */
+#speech.resultPos{
+  bottom: 150px;                 /* ←ここで上下調整（増やすと上へ） */
+  text-shadow: 0 10px 28px rgba(0,0,0,.85);
+}
+
 </style>
 </head>
 
