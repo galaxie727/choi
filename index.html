@@ -366,66 +366,51 @@ header{
 
 <script>
 /* =========================================================
-   画像・女の子（3人 / 各15枚 / クリア3枚 / 結果各3枚 / GOは2種）
+   ★あなたのファイル名規則に完全対応★
+   - girlA_top_01.png
+   - girlA_normal_01.png ～ 15
+   - girlA_gameover_01.png
+   - girlA_chi_gameover_01.png
+   - girlA_clear_01.png ～ 03
+   - girlA_score_s_01.png ～ girlA_score_d_03.png
+   ※B/Cも同じ規則で置けばそのまま動く
    ========================================================= */
+
+function pad2(n){ return String(n).padStart(2,"0"); }
+
+function makeGirl(prefix, label){
+  const normals = Array.from({length:15}, (_,i)=>`${prefix}_normal_${pad2(i+1)}.png`);
+  const clears  = Array.from({length:3},  (_,i)=>`${prefix}_clear_${pad2(i+1)}.png`);
+  const scores  = (rank)=> Array.from({length:3},(_,i)=>`${prefix}_score_${rank}_${pad2(i+1)}.png`);
+  return {
+    id: prefix.replace("girl",""), // A/B/C
+    label,
+    top: `${prefix}_top_01.png`,
+    normalImages: normals,
+    clearImages: clears,
+    // クリア時セリフ（3枚ぶん）
+    clearLines: ["ちゃんとギュウって言えたね","最後までいけたね","おつかれさま"],
+    goverNormal: `${prefix}_gameover_01.png`,
+    goverChee:   `${prefix}_chi_gameover_01.png`,
+    scoreImages: {
+      s: scores("s"),
+      a: scores("a"),
+      b: scores("b"),
+      c: scores("c"),
+      d: scores("d"),
+    },
+    // チー娘モードGO文言（女の子別にしたいならここを変える）
+    cheeOnlyGoText: (reached, best)=>`ステージ${reached}でゲームオーバー\n最高ステージ：ステージ${best}`
+  };
+}
+
 const GIRLS = [
-  {
-    id: "A",
-    label: "Girl A",
-    top: "girlA_top.png",
-    goverNormal: "girlA_gover.png",
-    goverChee:   "girlA_gover_chee.png",
-    images: Array.from({length:15},(_,k)=>`girlA_${String(k+1).padStart(2,"0")}.png`),
-    clearImages: ["girlA_clear_1.png","girlA_clear_2.png","girlA_clear_3.png"],
-    clearLines:  ["ちゃんとギュウって言えたね","最後までいけたね","おつかれさま"],
-    resultImages: {
-      S:["girlA_result_S_1.png","girlA_result_S_2.png","girlA_result_S_3.png"],
-      A:["girlA_result_A_1.png","girlA_result_A_2.png","girlA_result_A_3.png"],
-      B:["girlA_result_B_1.png","girlA_result_B_2.png","girlA_result_B_3.png"],
-      C:["girlA_result_C_1.png","girlA_result_C_2.png","girlA_result_C_3.png"],
-      D:["girlA_result_D_1.png","girlA_result_D_2.png","girlA_result_D_3.png"]
-    },
-    cheeOnlyGoText: (reached, best)=>`あっ…そこ…\nステージ${reached}でストップ\n最高：ステージ${best}`
-  },
-  {
-    id: "B",
-    label: "Girl B",
-    top: "girlB_top.png",
-    goverNormal: "girlB_gover.png",
-    goverChee:   "girlB_gover_chee.png",
-    images: Array.from({length:15},(_,k)=>`girlB_${String(k+1).padStart(2,"0")}.png`),
-    clearImages: ["girlB_clear_1.png","girlB_clear_2.png","girlB_clear_3.png"],
-    clearLines:  ["よし、クリア！","最後まで来たね！","ちゃんと見てたよ"],
-    resultImages: {
-      S:["girlB_result_S_1.png","girlB_result_S_2.png","girlB_result_S_3.png"],
-      A:["girlB_result_A_1.png","girlB_result_A_2.png","girlB_result_A_3.png"],
-      B:["girlB_result_B_1.png","girlB_result_B_2.png","girlB_result_B_3.png"],
-      C:["girlB_result_C_1.png","girlB_result_C_2.png","girlB_result_C_3.png"],
-      D:["girlB_result_D_1.png","girlB_result_D_2.png","girlB_result_D_3.png"]
-    },
-    cheeOnlyGoText: (reached, best)=>`まだ早いよ？\nステージ${reached}でゲームオーバー\n最高：ステージ${best}`
-  },
-  {
-    id: "C",
-    label: "Girl C",
-    top: "girlC_top.png",
-    goverNormal: "girlC_gover.png",
-    goverChee:   "girlC_gover_chee.png",
-    images: Array.from({length:15},(_,k)=>`girlC_${String(k+1).padStart(2,"0")}.png`),
-    clearImages: ["girlC_clear_1.png","girlC_clear_2.png","girlC_clear_3.png"],
-    clearLines:  ["……合格","最後まで通ったね","うん、おつかれ"],
-    resultImages: {
-      S:["girlC_result_S_1.png","girlC_result_S_2.png","girlC_result_S_3.png"],
-      A:["girlC_result_A_1.png","girlC_result_A_2.png","girlC_result_A_3.png"],
-      B:["girlC_result_B_1.png","girlC_result_B_2.png","girlC_result_B_3.png"],
-      C:["girlC_result_C_1.png","girlC_result_C_2.png","girlC_result_C_3.png"],
-      D:["girlC_result_D_1.png","girlC_result_D_2.png","girlC_result_D_3.png"]
-    },
-    cheeOnlyGoText: (reached, best)=>`んー…惜しい。\nステージ${reached}で終了\n最高：ステージ${best}`
-  }
+  makeGirl("girlA","Girl A"),
+  makeGirl("girlB","Girl B"),
+  makeGirl("girlC","Girl C")
 ];
 
-/* 共通クリア画像を使わず、女の子別 clearImages を使用（3秒以上表示） */
+/* クリア演出：最低3秒 */
 const CLEAR_MIN_MS = 3000;
 
 /* =========================================================
@@ -557,11 +542,11 @@ function calcCheePercent(counts){
 }
 
 function rankFromPercent(p){
-  if(p >= 80) return "S";
-  if(p >= 60) return "A";
-  if(p >= 40) return "B";
-  if(p >= 20) return "C";
-  return "D";
+  if(p >= 80) return "s";
+  if(p >= 60) return "a";
+  if(p >= 40) return "b";
+  if(p >= 20) return "c";
+  return "d";
 }
 
 /* =========================================================
@@ -584,7 +569,7 @@ let counts = { hai:0, iie:0, chi:0, gyuu:0 };
 
 // クリア→結果のために保持
 let lastResultPercent = 0;
-let lastResultRank = "C";
+let lastResultRank = "c";
 
 const startScreen=document.getElementById("startScreen");
 const startBg=document.getElementById("startBg");
@@ -713,7 +698,6 @@ function applyRandomColorsToButtons(){
   const cols = shuffle(buttonColors);
   btns.forEach((b,idx)=>{ b.style.background = cols[idx % cols.length]; });
 }
-
 function setButtonsEnabled(on){
   document.querySelectorAll("#choices button").forEach(b=>b.disabled=!on);
 }
@@ -775,11 +759,11 @@ function buildChoicesChee10(){
    ========================================================= */
 function applyQuestionBg(){
   const girl = getSelectedGirl();
-  bg.style.backgroundImage = `url("${girl.images[i % girl.images.length]}")`;
+  bg.style.backgroundImage = `url("${girl.normalImages[i % girl.normalImages.length]}")`;
 }
-function randGirlImage(){
+function randGirlNormalImage(){
   const girl = getSelectedGirl();
-  return girl.images[randInt(girl.images.length)];
+  return girl.normalImages[randInt(girl.normalImages.length)];
 }
 
 /* =========================================================
@@ -836,12 +820,10 @@ function cheeOnlyPickStage(){
 function maybeChee(){
   if(ended) return;
 
-  // 次の問題へ
   i++;
   if(i < questions.length){
-    // 45問目直前でも通常通り
     // チー娘乱入
-    if(!cheeCooldown && Math.random() < CHEE_RATE && i < questions.length){
+    if(!cheeCooldown && Math.random() < CHEE_RATE){
       cheeCooldown=true;
       setButtonsEnabled(false);
       game.classList.add("hold");
@@ -854,7 +836,7 @@ function maybeChee(){
       showQuestion();
     }
   }else{
-    // 本来ここには来ない（45問目処理でclear/resultへ行く）
+    // 念のため
     endFallback();
   }
 }
@@ -871,7 +853,7 @@ function startCheeBattle(level){
   game.classList.add("cut","announce","chee");
   if(level.stars >= 3) game.classList.add("stage3plus");
 
-  bg.style.backgroundImage = `url("${randGirlImage()}")`;
+  bg.style.backgroundImage = `url("${randGirlNormalImage()}")`;
 
   setTimeout(()=>{
     game.classList.remove("cut","announce");
@@ -964,9 +946,7 @@ function answer(t){
           return;
         }
 
-        // 通常モード：戦闘勝利→次へ（問題インデックスは戦闘開始前のままなのでそのまま i を進めない）
-        // ※チー乱入は「次へ進む直前」に起こる設計なので、勝利後は showQuestion() で現状の i を表示
-        // ただし、乱入前に「次へ」を止めているので、ここでは showQuestion() で現在の i を表示する
+        // 通常モード：チー乱入勝利→同じ問題に戻る（進行は止めていた）
         showQuestion();
       }, GIRL_REPLY_DELAY_MS + CHEE_SUCCESS_HOLD_MS);
 
@@ -998,7 +978,7 @@ function answer(t){
         // 45問目失敗 → 即GO（通常GO）
         gameOverFinalGate();
       }else{
-        // クリア → 3秒+セリフ → 結果画面（チー牛度%）
+        // クリア → 3秒+セリフ → 結果画面
         onClearNormal();
       }
     }, GIRL_REPLY_DELAY_MS + 200);
@@ -1007,7 +987,6 @@ function answer(t){
 
   // それ以外は次へ
   setTimeout(()=>{
-    // 乱入発生は「次へ」直前の設計に合わせて、maybeCheeの中で処理
     maybeChee();
   }, GIRL_REPLY_DELAY_MS + NORMAL_REACT_MS);
 }
@@ -1055,14 +1034,14 @@ function showResultScreen(){
 
   const girl = getSelectedGirl();
   const rank = lastResultRank;
-  const imgs = (girl.resultImages && girl.resultImages[rank]) ? girl.resultImages[rank] : [];
+  const imgs = girl.scoreImages[rank] || [];
   const img = imgs.length ? imgs[randInt(imgs.length)] : girl.top;
 
   bg.style.backgroundImage = `url("${img}")`;
   q.textContent = "";
   clearSpeech();
 
-  // 結果表示
+  // 結果表示（ここが「結果画像」）
   s.innerHTML = `
     <div class="resultTitle">あなたのチー牛度</div>
     <div class="resultPercent">${lastResultPercent}%</div>
@@ -1107,7 +1086,7 @@ function renderEndButtonsDelayed(delayMs){
 function gameOverFinalGate(){
   ended=true;
   resetCheeVisuals();
-  mode="result"; // 実質終了画面
+  mode="result";
 
   const girl = getSelectedGirl();
   bg.style.backgroundImage = `url("${girl.goverNormal}")`;
@@ -1135,6 +1114,7 @@ function gameOver(){
       isNewRecordRun = true;
     }
     const finalBest = Math.max(reachedStage, bestStage);
+
     const txt = (typeof girl.cheeOnlyGoText === "function")
       ? girl.cheeOnlyGoText(reachedStage, finalBest)
       : `ステージ${reachedStage}でゲームオーバー\n最高ステージ：ステージ${finalBest}`;
@@ -1151,7 +1131,6 @@ function gameOver(){
   renderEndButtonsDelayed(1000);
 }
 
-/* 念のため（通常では使わない） */
 function endFallback(){
   ended=true;
   resetCheeVisuals();
@@ -1210,7 +1189,9 @@ function backToTop(){
   refreshStartBg();
 }
 
-/* start buttons */
+/* =========================================================
+   start buttons
+   ========================================================= */
 document.getElementById("startBtnNormal").onclick=()=>{
   startScreen.classList.add("hide");
   game.classList.remove("hide");
@@ -1223,9 +1204,6 @@ document.getElementById("startBtnChee").onclick=()=>{
   showTopNewRecordBadge(false);
   restart("cheeOnly");
 };
-
-window.restart = restart;
-window.backToTop = backToTop;
 
 /* =========================================================
    init
