@@ -217,6 +217,14 @@ header{
   min-height:40px;
   opacity:1;
   white-space:pre-line;
+  /* 結果画面は下寄せにして顔に被せない */
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 120px;      /* ←ここで上下を調整（数値大きいほど上へ） */
+  text-align: center;
+  z-index: 5;
+  pointer-events: none;
 }
 
 /* チー娘「チー！」 */
@@ -1043,10 +1051,9 @@ function showResultScreen(){
 
   // 結果表示（ここが「結果画像」）
   s.innerHTML = `
-    <div class="resultTitle">あなたのチー牛度</div>
-    <div class="resultPercent">${lastResultPercent}%</div>
-    <div class="resultSub">（※44問の選択バランスから算出）</div>
-  `;
+  <div class="resultTitle">あなたのチー牛度</div>
+  <div class="resultPercent">${lastResultPercent}%</div>
+`;
   c.textContent = `RESULT`;
 
   renderEndButtonsDelayed(0);
