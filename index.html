@@ -130,10 +130,14 @@ header{
   display:flex;
   gap:12px;
   justify-content:center;
-  flex-wrap:wrap;
-  margin-top:50px; /* メニューを下げたい場合は増やす */
+  align-items:center;
+  flex-wrap:nowrap;   /* ← 横並び固定 */
+  margin-top:50px;   /* ここは今まで通り上下調整に使える */
 }
+
 .startBtn{
+  flex:1;            /* ← 2つを同じ幅にする */
+  max-width:220px;   /* ← 大きくなりすぎ防止（好みで調整） */
   font-size:18px;
   padding:14px 18px;
   border:none;
@@ -141,9 +145,8 @@ header{
   background:#ffffff22;
   color:#fff;
   font-weight:900;
-  min-width:170px;
 }
-
+  
 /* TOP: NEW RECORD バッジ */
 .badge{
   display:inline-block;
