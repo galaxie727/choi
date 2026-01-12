@@ -50,7 +50,7 @@ header{
 #startScreen .overlay{
   justify-content:flex-start;
   align-items:flex-start;
-  padding-top:80px;  /* ← ここでメニューを下げる */
+  padding-top:80px;  /* メニューを下げる */
   padding-bottom:0;
 }
 
@@ -58,11 +58,10 @@ header{
   position:relative;
   width:100%;
   text-align:center;
-
-  transform: translateY(60px); /* ← メニュー全体を下げる */
+  transform: translateY(60px); /* メニュー全体を下げる */
 }
 
-/* ロゴ：画面上に固定（顔に被りにくく） */
+/* ロゴ：画面上に固定 */
 .topLogo{
   position:absolute;
   left:50%;
@@ -76,7 +75,7 @@ header{
 
 /* タイトル等はロゴの下へ */
 .startTitle{
-  margin-top:160px; /* ロゴ分のスペース（必要なら増減） */
+  margin-top:160px; /* ロゴ分のスペース */
   font-size:18px;
   font-weight:900;
   letter-spacing:.14em;
@@ -131,13 +130,12 @@ header{
   gap:12px;
   justify-content:center;
   align-items:center;
-  flex-wrap:nowrap;   /* ← 横並び固定 */
-  margin-top:16px;   /* ここは今まで通り上下調整に使える */
+  flex-wrap:nowrap;   /* 横並び固定 */
+  margin-top:16px;
 }
-
 .startBtn{
-  flex:1;            /* ← 2つを同じ幅にする */
-  max-width:220px;   /* ← 大きくなりすぎ防止（好みで調整） */
+  flex:1;            /* 2つを同じ幅 */
+  max-width:220px;   /* 大きくなりすぎ防止 */
   font-size:18px;
   padding:14px 18px;
   border:none;
@@ -146,7 +144,7 @@ header{
   color:#fff;
   font-weight:900;
 }
-  
+
 /* TOP: NEW RECORD バッジ */
 .badge{
   display:inline-block;
@@ -165,6 +163,8 @@ header{
   transform:translateY(0) scale(1);
 }
 .badge .star{ color:#ffd54a; }
+
+.hide{display:none}
 
 /* GAME */
 #gameScreen .overlay{
@@ -258,7 +258,7 @@ header{
   text-shadow:0 10px 28px rgba(0,0,0,.75);
 }
 
-/* チー娘の「チー！」（⭐︎⭐︎⭐︎だけ少し大きい） */
+/* チー娘の「チー！」 */
 .cheeWord.big{ transform:scale(1.05); transform-origin:right bottom; }
 
 /* ❤ */
@@ -277,7 +277,7 @@ header{
 }
 .heartPop{ animation:heartPop .22s ease-out; }
 
-/* ⭐︎⭐︎⭐︎ 背景揺れ（軽め） */
+/* ⭐︎⭐︎⭐︎ 背景揺れ */
 @keyframes bgShake {
   0%   { transform: translate(0, 0) scale(1.12); }
   20%  { transform: translate(-2px, 1px) scale(1.12); }
@@ -311,7 +311,7 @@ header{
   border-radius:12px;
 }
 
-/* gauge (チー娘中だけ表示) */
+/* gauge */
 .gauge{
   height:8px;
   background:#222;
@@ -336,8 +336,6 @@ header{
 #gaugeBar.yellow{ background:linear-gradient(90deg,#ffe259,#ffa751); }
 #gaugeBar.red{ background:linear-gradient(90deg,#ff416c,#ff4b2b); }
 
-.hide{display:none}
-
 /* ===== RESULT表示（画面下：ラベル＋右寄せ％） ===== */
 #gameScreen.result .bubble{ display:none; }
 
@@ -361,7 +359,7 @@ header{
   align-items:baseline;
 }
 #resultBox .pct{
-  font-size:48px;               /* 小さめが良い：ここで調整 */
+  font-size:48px;               /* %サイズ調整 */
   font-weight:900;
   line-height:1;
 }
@@ -392,15 +390,9 @@ header{
       </div>
 
       <div class="girlSelectRow">
-        <button class="girlCard" id="girlBtnA" onclick="selectGirl('A')">
-          Girl A
-        </button>
-        <button class="girlCard" id="girlBtnB" onclick="selectGirl('B')">
-          Girl B
-        </button>
-        <button class="girlCard" id="girlBtnC" onclick="selectGirl('C')">
-          Girl C
-        </button>
+        <button class="girlCard" id="girlBtnA" onclick="selectGirl('A')">Girl A</button>
+        <button class="girlCard" id="girlBtnB" onclick="selectGirl('B')">Girl B</button>
+        <button class="girlCard" id="girlBtnC" onclick="selectGirl('C')">Girl C</button>
       </div>
 
       <div class="startBtns">
@@ -442,7 +434,7 @@ header{
 
 <script>
 /* =======================
-   設定・画像・保存
+   保存・キャラ
 ======================= */
 
 /* ローカル保存 */
@@ -455,16 +447,15 @@ function setBestStage(stage){ localStorage.setItem(CHEE_RECORD_KEY, String(stage
 function getSavedGirl(){ return localStorage.getItem(GIRL_KEY) || "A"; }
 function saveGirl(g){ localStorage.setItem(GIRL_KEY, g); }
 
-/* 女の子：命名規則（A/B/C 同構成） */
+/* 女の子：命名規則（A/B/C 同構成）
+   score は s/a/b のみ（各3枚）に統一 */
 function makeGirl(prefix, label, chiOverText){
   const normal = Array.from({length:15}, (_,i)=> `${prefix}_normal_${String(i+1).padStart(2,"0")}.png`);
   const clear  = Array.from({length:3},  (_,i)=> `${prefix}_clear_${String(i+1).padStart(2,"0")}.png`);
   const score = {
     s: Array.from({length:3}, (_,i)=> `${prefix}_score_s_${String(i+1).padStart(2,"0")}.png`),
     a: Array.from({length:3}, (_,i)=> `${prefix}_score_a_${String(i+1).padStart(2,"0")}.png`),
-    b: Array.from({length:3}, (_,i)=> `${prefix}_score_b_${String(i+1).padStart(2,"0")}.png`),
-    c: Array.from({length:3}, (_,i)=> `${prefix}_score_c_${String(i+1).padStart(2,"0")}.png`),
-    d: Array.from({length:3}, (_,i)=> `${prefix}_score_d_${String(i+1).padStart(2,"0")}.png`)
+    b: Array.from({length:3}, (_,i)=> `${prefix}_score_b_${String(i+1).padStart(2,"0")}.png`)
   };
   return {
     id: label,
@@ -486,7 +477,9 @@ const GIRLS = {
 
 let selectedGirlKey = getSavedGirl();
 
-/* ===== 問題（45問） ===== */
+/* =======================
+   問題（45問）
+======================= */
 const questions = [
   { text:"あなたはチー牛ですか？" },
   { text:"チーと言えば？" },
@@ -535,14 +528,18 @@ const questions = [
   { text:"最後にひとこと。チーと言えば？" } // 45問目
 ];
 
-/* 通常モード：チー娘乱入（⭐︎/⭐︎⭐︎/⭐︎⭐︎⭐︎） */
+/* =======================
+   チー娘設定
+======================= */
+
+/* 通常モード：乱入（⭐︎/⭐︎⭐︎/⭐︎⭐︎⭐︎） */
 const cheeLevelsNormal = [
   { stars:1, timeMs:2400, gauge:"cool",   weight:0.60 },
   { stars:2, timeMs:1700, gauge:"yellow", weight:0.30 },
   { stars:3, timeMs:1200, gauge:"red",    weight:0.10 }
 ];
 
-/* もっさり＆演出 */
+/* 演出 */
 const NORMAL_REACT_MS = 1050;
 const QUESTION_SHOW_DELAY = 100;
 const CHEE_PRE_HOLD_MS = 620;
@@ -553,7 +550,7 @@ const CHEE_SUCCESS_HOLD_MS = 700;
 const GIRL_REPLY_DELAY_MS = 500;
 const FLASH_ON_MS = 120;
 
-/* 通常モード：チー娘出現率 */
+/* 通常モード：乱入率 */
 const CHEE_RATE = 0.35;
 
 /* ⭐︎⭐︎⭐︎：ゲージ最初だけ速い */
@@ -563,10 +560,12 @@ const STAGE3_BOOST_MULT = 1.35;
 /* チー娘モード：勝つたびステージUP */
 let cheeStage = 1;
 
-/* NEW RECORD 演出フラグ（その1プレイ中だけ有効） */
+/* NEW RECORD（そのプレイ中だけ） */
 let isNewRecordRun = false;
 
-/* state */
+/* =======================
+   state
+======================= */
 let i=0;
 let mode="quiz";           // quiz | chee | result
 let locked=false;
@@ -576,13 +575,15 @@ let ended=false;
 let currentCheeLevel=null;
 let gameMode="normal";     // normal | cheeOnly
 
-/* 採点用（44問のみ集計。45問目は強制ギュウ） */
+/* 採点用カウント（今は“ランダム%”なので残ってても使わないが将来用に保持） */
 const counts = { "はい":0, "いいえ":0, "チー":0, "ギュウ":0 };
 
-/* チー娘モード：ギュウ位置が連続しないように */
+/* チー娘モード：ギュウ位置が連続しない */
 let lastGyuuIndex = -1;
 
-/* DOM */
+/* =======================
+   DOM
+======================= */
 const startScreen=document.getElementById("startScreen");
 const game=document.getElementById("gameScreen");
 const bg=document.querySelector("#gameScreen .bg");
@@ -601,11 +602,10 @@ const resultBox=document.getElementById("resultBox");
 const resultPct=document.getElementById("resultPct");
 
 /* =======================
-   UIヘルパー
+   UI helper
 ======================= */
 
 function getSelectedGirl(){ return GIRLS[selectedGirlKey] || GIRLS.A; }
-
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
 
@@ -621,7 +621,6 @@ function selectGirl(key){
   selectedGirlKey = key;
   saveGirl(key);
   applyGirlButtonUI();
-  // TOP背景も選択キャラのtopに
   document.querySelector("#startScreen .bg").style.backgroundImage = `url("${getSelectedGirl().top}")`;
 }
 window.selectGirl = selectGirl;
@@ -629,14 +628,14 @@ window.selectGirl = selectGirl;
 function applyGirlButtonUI(){
   const a=document.getElementById("girlBtnA");
   const b=document.getElementById("girlBtnB");
-  const c=document.getElementById("girlBtnC");
-  [a,b,c].forEach(x=>x.classList.remove("active"));
+  const cBtn=document.getElementById("girlBtnC");
+  [a,b,cBtn].forEach(x=>x.classList.remove("active"));
   if(selectedGirlKey==="A") a.classList.add("active");
   if(selectedGirlKey==="B") b.classList.add("active");
-  if(selectedGirlKey==="C") c.classList.add("active");
+  if(selectedGirlKey==="C") cBtn.classList.add("active");
 }
 
-/* WebAudio: 小さいポン */
+/* WebAudio */
 let audioCtx=null;
 function ensureAudio(){
   if(!audioCtx){
@@ -723,7 +722,7 @@ function setTextWithHeart(text){
   s.innerHTML = `${text}<span class="heartOnly">❤</span>`;
 }
 
-/* ボタン色（適当に） */
+/* ボタン色 */
 const buttonColors = [
   "#d64545","#c0392b","#e67e22","#f1c40f",
   "#27ae60","#16a085","#2980b9","#8e44ad",
@@ -735,7 +734,7 @@ function applyRandomColorsToButtons(){
   btns.forEach((b,idx)=>{ b.style.background = cols[idx % cols.length]; });
 }
 
-/* UI: 通常4択 */
+/* 4択 */
 function buildChoices(){
   choices.classList.remove("chee10");
   choices.innerHTML="";
@@ -750,18 +749,15 @@ function buildChoices(){
   applyRandomColorsToButtons();
 }
 
-/* UI: チー娘モード 10ボタン（ギュウ位置が連続しない） */
+/* チー娘モード 10ボタン（ギュウ位置が連続しない） */
 function buildChoicesChee10(){
   const decoys = [
     "はい","いいえ","チー","ポン","カン","ドン","モー","牛","チーズ","特盛り",
     "並","大盛り","湯気","ニコッ","クスッ","笑","うし","ぎゅ","チー牛","牛丼"
   ];
   const nine = shuffle(decoys.filter(x=>x!=="ギュウ")).slice(0, 9);
-
-  // 9個のダミー + ギュウ で10個
   let labels = ["ギュウ", ...nine];
 
-  // シャッフルして、ギュウ位置が前回と同じならやり直し（最大10回）
   for(let k=0;k<10;k++){
     labels = shuffle(labels);
     const idx = labels.indexOf("ギュウ");
@@ -773,7 +769,6 @@ function buildChoicesChee10(){
 
   choices.classList.add("chee10");
   choices.innerHTML="";
-
   labels.forEach(label=>{
     const b=document.createElement("button");
     b.textContent = label;
@@ -781,7 +776,6 @@ function buildChoicesChee10(){
     b.onclick=()=>answer(label);
     choices.appendChild(b);
   });
-
   applyRandomColorsToButtons();
 }
 
@@ -791,7 +785,6 @@ function applyTopBg(){
 }
 function applyQuestionBg(){
   const girl = getSelectedGirl();
-  // 15枚をループ
   bg.style.backgroundImage = `url("${girl.normal[i % girl.normal.length]}")`;
 }
 
@@ -807,7 +800,6 @@ function showQuestion(){
   resultBox.classList.add("hide");
 
   resetCheeVisuals();
-
   applyQuestionBg();
 
   q.classList.add("hide");
@@ -820,7 +812,7 @@ function showQuestion(){
   setButtonsEnabled(true);
 }
 
-/* 通常モード：チー娘乱入の難易度抽選 */
+/* 通常モード：チー娘乱入難易度 */
 function pickCheeLevelNormal(){
   const r = Math.random();
   let acc = 0;
@@ -831,7 +823,7 @@ function pickCheeLevelNormal(){
   return cheeLevelsNormal[0];
 }
 
-/* チー娘モード用：ステージ→時間（緩急あり） */
+/* チー娘モード：ステージ→時間 */
 function cheeOnlyPickStage(){
   let stage = cheeStage;
 
@@ -851,16 +843,13 @@ function cheeOnlyPickStage(){
 function maybeChee(){
   if(ended) return;
 
-  // 次が存在するか
   if(i >= questions.length-1){
-    // ここに来るのは通常ない（45問目後は結果へ）
     endResult();
     return;
   }
 
   if(!cheeCooldown && Math.random() < CHEE_RATE){
     cheeCooldown=true;
-
     setButtonsEnabled(false);
     game.classList.add("hold");
     setTimeout(()=>{
@@ -886,7 +875,6 @@ function startCheeBattle(level){
   game.classList.add("cut","announce","chee");
   if(level.stars >= 3) game.classList.add("stage3plus");
 
-  // チー娘中は選択キャラの通常画像からランダム
   bg.style.backgroundImage = `url("${pick(getSelectedGirl().normal)}")`;
 
   setTimeout(()=>{
@@ -941,14 +929,14 @@ function startCheeTimer(level){
     if(r > 0){
       rafId = requestAnimationFrame(tick);
     }else{
-      gameOver(true); // チー娘負け
+      gameOver(true);
     }
   };
 
   rafId = requestAnimationFrame(tick);
 }
 
-/* チー娘モード：勝利でステージ+1 & NEW RECORD判定 */
+/* チー娘モード：勝利でステージ+1 & NEW RECORD */
 function nextCheeOnlyAfterWin(){
   cheeStage++;
   c.textContent = `ステージ${cheeStage}`;
@@ -964,56 +952,17 @@ function nextCheeOnlyAfterWin(){
 }
 
 /* =======================
-   採点（44問）
+   ランク（S/A/B のみ）
 ======================= */
-
-function computeScorePercent(cnt){
-  // diff = max - min
-  const vals = Object.values(cnt);
-  const max = Math.max(...vals);
-  const min = Math.min(...vals);
-  const diff = max - min;
-
-  // 基本：diff小さいほど高い（0→100, 44→0）
-  let p = Math.round(((44 - diff) / 44) * 100);
-
-  // 例外：全て同じ（44/0/0/0）
-  if(max === 44 && min === 0){
-    const key = Object.keys(cnt).find(k=>cnt[k]===44);
-    const map = { "はい":48, "いいえ":42, "チー":57, "ギュウ":53 };
-    if(map[key] != null) p = map[key];
-  }
-
-  // 例外：43+1
-  // 1つが43、別の1つが1、残り0
-  const sorted = vals.slice().sort((a,b)=>b-a);
-  if(sorted[0]===43 && sorted[1]===1 && sorted[2]===0 && sorted[3]===0){
-    p = 44;
-  }
-
-  // 例外：11ずつ（本来100だけど、バレ防止で51）
-  if(vals.every(v=>v===11)){
-    p = 51;
-  }
-
-  // 範囲保護
-  p = Math.max(0, Math.min(100, p));
-  return p;
-}
-
 function computeRank(p){
-  // 適当な5段階（必要なら後で調整）
-  if(p >= 80) return "s";
-  if(p >= 65) return "a";
-  if(p >= 50) return "b";
-  if(p >= 35) return "c";
-  return "d";
+  if(p >= 92) return "s";
+  if(p >= 86) return "a";
+  return "b";
 }
 
 /* =======================
    回答処理
 ======================= */
-
 function answer(t){
   if(locked || ended) return;
   locked=true;
@@ -1022,7 +971,7 @@ function answer(t){
   ensureAudio();
   q.classList.add("hide");
 
-  // チー娘戦
+  /* チー娘戦 */
   if(mode==="chee"){
     if(t==="ギュウ"){
       stopCheeTimer();
@@ -1038,27 +987,25 @@ function answer(t){
           return;
         }
 
-        // 通常に戻る：次の問題へ
         i++;
         if(i < questions.length) showQuestion();
         else endResult();
       }, GIRL_REPLY_DELAY_MS + CHEE_SUCCESS_HOLD_MS);
 
     }else{
-      gameOver(true); // チー娘負け
+      gameOver(true);
     }
     return;
   }
 
-  // 通常回答：45問目だけ特殊（ギュウ以外即ゲームオーバー）
+  /* 通常回答：45問目だけギュウ以外即GO */
   const isLast = (i === 44);
 
-  // 44問までは集計
   if(!isLast){
     if(counts[t] != null) counts[t]++;
   }
 
-  // 女の子返事（チー以外は ❤ 付け、チーはギュウ❤）
+  /* 女の子返事 */
   setTimeout(()=>{
     if(t==="はい")        setTextWithHeart("笑");
     else if(t==="いいえ") setTextWithHeart("クスッ");
@@ -1070,20 +1017,18 @@ function answer(t){
   setTimeout(()=>{
     if(isLast){
       if(t !== "ギュウ"){
-        gameOver(false); // 通常ゲームオーバー
+        gameOver(false);
         return;
       }
-      // クリア → 結果
       endResult();
       return;
     }
-    // 通常は次へ（乱入あり）
     maybeChee();
   }, GIRL_REPLY_DELAY_MS + NORMAL_REACT_MS);
 }
 
 /* =======================
-   結果 / ゲームオーバー / ボタン
+   結果 / ゲームオーバー
 ======================= */
 
 function renderEndButtonsDelayed(delayMs){
@@ -1105,18 +1050,15 @@ function endResult(){
   game.classList.add("result");
   resultBox.classList.remove("hide");
 
-  const p = computeScorePercent(counts);
+  /* ★ 採点は“ランダム80〜100”固定 ★ */
+  const p = 80 + Math.floor(Math.random() * 21); // 80〜100
   const rank = computeRank(p);
 
-  // RESULT画像：ランクに応じてランダム
   const girl = getSelectedGirl();
   const img = pick(girl.score[rank] || [girl.top]);
   bg.style.backgroundImage = `url("${img}")`;
 
-  // RESULT表示
   resultPct.textContent = `${p}%`;
-
-  // 表示
   q.textContent="";
   clearSpeech();
   c.textContent = "RESULT";
@@ -1134,7 +1076,6 @@ function gameOver(isCheeBattle){
   const girl = getSelectedGirl();
 
   if(gameMode === "cheeOnly"){
-    // チー娘モードのゲームオーバー（画像＆文言は女の子別）
     const reachedStage = cheeStage;
     const bestStage = getBestStage();
 
@@ -1147,15 +1088,12 @@ function gameOver(isCheeBattle){
     clearSpeech();
     setSpeechPlain(girl.chiOverText);
 
-    // ヘッダーは残す（ステージ表示）
     c.textContent = `GAME OVER (ステージ${reachedStage})`;
 
-    // 誤タップ防止：1秒後にボタン
     renderEndButtonsDelayed(1000);
     return;
   }
 
-  // 通常モード：ゲームオーバー（画像は女の子別）
   bg.style.backgroundImage = `url("${girl.gameover}")`;
   clearSpeech();
   setSpeechPlain("あなたチー牛じゃなかったのね。。");
@@ -1178,13 +1116,10 @@ function restart(modeName){
 
   gameMode = modeName || "normal";
 
-  // NEW RECORD フラグはプレイ開始時OFF
   isNewRecordRun = false;
 
-  // RESULT集計をリセット
   counts["はい"]=0; counts["いいえ"]=0; counts["チー"]=0; counts["ギュウ"]=0;
 
-  // RESULT UI off
   game.classList.remove("result");
   resultBox.classList.add("hide");
 
