@@ -6,23 +6,54 @@
   <title>チーと言えばギュウと答える</title>
   <style>
     :root{
-      --bg:#0f0f10;
+      --bg:#0b0b0c;
+      --panel:#141519;
       --text:#f2f2f2;
       --sub:#b9bcc6;
-      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --btn:#1f2026;
+      --btn2:#2a2c35;
+      --accent:#7dd3fc;
+      --danger:#fb7185;
+      --ok:#34d399;
+      --shadow: 0 12px 30px rgba(0,0,0,.38);
       --radius:18px;
     }
     *{box-sizing:border-box}
     body{
       margin:0;
       font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
-      background: radial-gradient(1200px 800px at 20% 0%, #1a1b20 0%, var(--bg) 55%);
+      background: radial-gradient(1200px 800px at 20% 0%, #151620 0%, var(--bg) 55%);
       color:var(--text);
     }
-    .wrap{max-width:520px;margin:0 auto;padding:18px 14px 30px;}
-    header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
-    .brand{font-weight:800;letter-spacing:.06em;font-size:15px;opacity:.95;}
-    .pill{display:flex;gap:8px;align-items:center;color:var(--sub);font-size:12px;}
+    .wrap{
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px 14px 26px;
+    }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .brand{
+      font-weight:900;
+      letter-spacing:.06em;
+      font-size: 14px;
+      opacity:.95;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pill{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      color:var(--sub);
+      font-size:12px;
+      white-space:nowrap;
+    }
     .pill b{color:var(--text)}
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
@@ -32,15 +63,35 @@
       overflow:hidden;
     }
 
-    .imgArea{position:relative;width:100%;aspect-ratio: 3/4;background:#111;}
-    .imgArea img{width:100%;height:100%;object-fit:cover;display:block;}
+    /* ====== TOP / GAME common image area ====== */
+    .imgArea{
+      position:relative;
+      width:100%;
+      aspect-ratio: 3 / 4; /* 縦ゲーム想定 */
+      background:#0f0f11;
+    }
+    .imgArea img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      display:block;
+      background:#0f0f11;
+    }
 
+    /* overlay (top bar) */
     .topBar{
-      position:absolute;left:10px;right:10px;top:10px;
-      display:flex;justify-content:space-between;align-items:center;
+      position:absolute;
+      left:10px;
+      right:10px;
+      top:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
       pointer-events:none;
+      gap:10px;
     }
     .badge{
+      pointer-events:none;
       background: rgba(0,0,0,.35);
       border: 1px solid rgba(255,255,255,.14);
       backdrop-filter: blur(8px);
@@ -48,13 +99,37 @@
       padding: 6px 10px;
       font-size: 12px;
       color:#fff;
+      display:flex;
+      gap:8px;
+      align-items:center;
     }
-    .badge .sub{opacity:.85;font-weight:600}
-    .badge .val{font-weight:900;letter-spacing:.02em}
+    .badge .sub{opacity:.85; font-weight:700}
+    .badge .val{font-weight:900; letter-spacing:.02em}
 
+    /* logo overlay for TOP */
+    .logoOverlay{
+      position:absolute;
+      left:14px;
+      right:14px;
+      top:14px;
+      display:flex;
+      justify-content:center;
+      pointer-events:none;
+    }
+    .logoOverlay img{
+      width: min(92%, 420px);
+      height:auto;
+      object-fit:contain;
+      filter: drop-shadow(0 10px 24px rgba(0,0,0,.45));
+    }
+
+    /* speech bubble */
     .bubble{
-      position:absolute;left:10px;right:10px;bottom:12px;
-      background: rgba(0,0,0,.42);
+      position:absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 12px;
+      background: rgba(0,0,0,.45);
       border: 1px solid rgba(255,255,255,.16);
       backdrop-filter: blur(10px);
       border-radius: 16px;
@@ -62,35 +137,16 @@
       line-height: 1.45;
       font-size: 15px;
       box-shadow: 0 8px 20px rgba(0,0,0,.28);
+      min-height: 58px;
     }
     .bubble small{display:block;color:var(--sub);font-size:12px;margin-top:6px}
 
-    /* 画面中央リアクション（昔の「ギュウ❤」感） */
-    .react{
-      position:absolute;inset:0;
-      display:flex;align-items:center;justify-content:center;
-      pointer-events:none;
-      opacity:0;
-      transition: opacity .12s ease, transform .12s ease;
-      transform: translateY(4px) scale(.98);
-    }
-    .react.show{
-      opacity:1;
-      transform: translateY(0) scale(1);
-    }
-    .react span{
-      font-size: 46px;
-      font-weight: 1000;
-      letter-spacing: .02em;
-      color:#fff;
-      text-shadow: 0 10px 26px rgba(0,0,0,.55);
-    }
-
+    /* choices */
     .choices{
-      padding:12px;
+      padding: 12px;
       display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
     button.choice{
       border: 1px solid rgba(255,255,255,.10);
@@ -99,15 +155,24 @@
       border-radius: 14px;
       padding: 14px 10px;
       font-size: 16px;
-      font-weight: 800;
+      font-weight: 900;
       letter-spacing: .04em;
       cursor:pointer;
       transition: transform .06s ease, filter .15s ease, border-color .15s ease;
     }
     button.choice:active{transform: translateY(1px) scale(.995)}
-    button.choice:disabled{opacity:.45;cursor:not-allowed;filter: grayscale(.2);}
+    button.choice:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      filter: grayscale(.2);
+    }
 
-    .footerBtns{display:flex;gap:10px;padding:0 12px 12px;}
+    /* footer buttons */
+    .footerBtns{
+      display:flex;
+      gap:10px;
+      padding: 0 12px 12px;
+    }
     .btn{
       flex:1;
       border: 1px solid rgba(255,255,255,.10);
@@ -115,20 +180,43 @@
       color: var(--text);
       border-radius: 14px;
       padding: 12px 10px;
-      font-weight: 800;
+      font-weight: 900;
       cursor:pointer;
     }
     .btn:active{transform: translateY(1px)}
     .btn.secondary{color:var(--sub)}
     .btn.danger{border-color: rgba(251,113,133,.35); color:#ffd0d8}
+    .btn.ok{border-color: rgba(52,211,153,.35); color:#c7ffe9}
     .hidden{display:none !important}
 
-    .note{margin-top:10px;font-size:12px;color:var(--sub);}
+    /* TOP screen buttons */
+    .topBtns{
+      padding: 12px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .bigBtn{
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+      border-radius: 16px;
+      padding: 14px 12px;
+      font-weight: 1000;
+      letter-spacing: .06em;
+      font-size: 16px;
+      cursor:pointer;
+    }
+    .bigBtn:active{transform: translateY(1px)}
+    .bigBtn.sub{
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--sub);
+    }
 
     /* modal */
     .modalBg{
       position:fixed; inset:0;
-      background: rgba(0,0,0,.55);
+      background: rgba(0,0,0,.58);
       display:flex;
       align-items:center;
       justify-content:center;
@@ -143,7 +231,11 @@
       box-shadow: var(--shadow);
       padding: 14px;
     }
-    .modal h2{margin: 6px 0 6px;font-size: 16px;letter-spacing:.04em;}
+    .modal h2{
+      margin: 6px 0 6px;
+      font-size: 16px;
+      letter-spacing:.04em;
+    }
     .modal p{margin:0;color:var(--sub);font-size:13px;line-height:1.5}
     .grid3{
       margin-top: 12px;
@@ -170,12 +262,16 @@
     .girlCard .cap{
       padding: 8px 8px 10px;
       text-align:center;
-      font-weight:900;
+      font-weight:1000;
       font-size: 12px;
       letter-spacing:.05em;
       color: var(--text);
     }
-    .tiny{font-size:11px;color:var(--sub);margin-top:8px;}
+    .tiny{
+      font-size:11px;
+      color:var(--sub);
+      margin-top:8px;
+    }
   </style>
 </head>
 <body>
@@ -191,33 +287,38 @@
 
     <div class="card">
       <div class="imgArea">
-        <img id="mainImg" alt="girl" src="" />
-        <div class="topBar">
-          <div class="badge"><span class="sub">STAGE</span> <span class="val" id="stageLabel">1</span></div>
-          <div class="badge"><span class="sub">MODE</span> <span class="val" id="modeLabel">NORMAL</span></div>
+        <img id="mainImg" alt="main" src="" />
+        <div class="logoOverlay" id="logoOverlay">
+          <img src="assets/logo_chi_gyuu.png" alt="logo">
         </div>
 
-        <div class="react" id="react"><span id="reactText">ギュウ❤</span></div>
+        <div class="topBar" id="topBar">
+          <div class="badge"><span class="sub">STAGE</span> <span class="val" id="stageLabel">—</span></div>
+          <div class="badge"><span class="sub">MODE</span> <span class="val" id="modeLabel">—</span></div>
+        </div>
+
         <div class="bubble" id="bubbleText">読み込み中…</div>
       </div>
 
-      <div class="choices" id="choices">
+      <!-- TOP buttons -->
+      <div class="topBtns" id="topBtns">
+        <button class="bigBtn" id="btnStartNormal">START（ノーマル）</button>
+        <button class="bigBtn" id="btnStartChiMusume">START（チー娘モード）</button>
+        <button class="bigBtn sub" id="btnChangeGirl">女の子を選びなおす</button>
+      </div>
+
+      <!-- GAME choices -->
+      <div class="choices hidden" id="choices">
         <button class="choice" data-choice="yes">はい</button>
         <button class="choice" data-choice="no">いいえ</button>
         <button class="choice" data-choice="chi">チー</button>
         <button class="choice" data-choice="gyu">ギュウ</button>
       </div>
 
-      <div class="footerBtns">
+      <div class="footerBtns hidden" id="footerBtns">
         <button class="btn secondary" id="btnBackTop">トップに戻る</button>
         <button class="btn danger hidden" id="btnRetry">もう一回</button>
       </div>
-    </div>
-
-    <div class="note">
-      ※ 画像ファイルは <b>/assets/</b> に置いてください。命名規則はあなたの確定仕様のままです。<br>
-      ※ 「もう一回」はゲームオーバー時に <b>1秒後</b> に表示されます。<br>
-      ※ STAGE1〜44 は <b>どれを押しても進みます</b>。即死は STAGE45 だけ。
     </div>
   </div>
 
@@ -225,7 +326,7 @@
   <div class="modalBg hidden" id="girlModal">
     <div class="modal">
       <h2>女の子を選んでね</h2>
-      <p>最初は必ず選択。以後は「トップに戻る」から変更できます。</p>
+      <p>最初は必ず選択。トップからいつでも変更できます。</p>
       <div class="grid3">
         <div class="girlCard" data-girl="A">
           <img src="assets/girlA_icon.png" alt="girlA">
@@ -240,24 +341,25 @@
           <div class="cap">girlC</div>
         </div>
       </div>
-      <div class="tiny">（icon は .png 前提。いまの assets と一致させています）</div>
+      <div class="tiny">※ icon は「正方形角丸PNG」をそのまま置けばOK</div>
     </div>
   </div>
 
   <script>
     /********************
-     * LocalStorage keys
+     * 設定
      ********************/
     const LS = {
       girl: "chi_gyu_selected_girl",
       bestStage: "chi_gyu_best_stage",
-      reachedStage: "chi_gyu_reached_stage",
-      counts: "chi_gyu_choice_counts"
+      reachedStage: "chi_gyu_reached_stage"
     };
 
-    /********************
-     * Questions (1〜44: 正解なし / 45: ギュウ以外即死)
-     ********************/
+    // 採点：あなたの最新指定に合わせて「常に100%チギュテッド」
+    // 80〜100のランダムに戻したい場合は "RANDOM_80_100" にするだけ
+    const SCORE_MODE = "ALWAYS_100_CHIGYUTED"; // "RANDOM_80_100" / "ALWAYS_100_CHIGYUTED"
+
+    // 問題（確定＋仮）
     const QUESTIONS = [
       "あなたはチー牛ですか？",
       "チーと言えば？",
@@ -265,21 +367,24 @@
       "石原さとみさんに「ギュウ」と言ってもらいたい？",
       "チーズ牛丼を頼んだ人を一瞬だけ見てしまったことはありますか？",
       "知らない人を見て「チー牛かも」と思ってしまったことはありますか？",
-      "麻雀には、チーをされた瞬間にギュウと答えるとチーを取り消す『チーギュウ返し』という技がある。本当だと思いますか？",
+      "麻雀には『チーギュウ返し』という技がある。本当だと思いますか？",
       "あなたは三度の飯よりチー牛が好きって本当ですか？",
       "山本由伸選手の「負けると言う選択肢はない」という名言はとてもカッコ良かったですね？",
       "山本由伸選手に「チーズ牛丼を食べないという選択肢はない」と言ってもらいたいですか？",
-      "ギリシャの哲学者アリストテレスの「すべての者は生まれながらに知恵を求める。」有名な名言は知っていますか？",
+      "アリストテレスの「すべての者は生まれながらに知恵を求める。」は知っていますか？",
       "チー牛界隈にも「すべての者は生まれながらにチーズ牛丼を求める。」という名言があるのを知っていますか？",
-      ...Array.from({length: 45 - 12}, (_,i)=>`（仮）問題 ${i+13}：あなたは「ギュウ」と言ってもらえると嬉しい？`)
+      ...Array.from({length: 45 - 12}, (_,i)=>`（仮）問題 ${i+13}：チーズ牛丼は、うまい。異論はない？`)
     ];
-    QUESTIONS[44] = "【最終】ここは「ギュウ」以外は即ゲームオーバーです。どうする？";
 
-    /********************
-     * Asset paths
-     ********************/
+    // 45問目：ギュウ以外は即ゲームオーバー（ここだけ）
+    const FINAL_STAGE = 45;
+
+    // 画像命名規則（いまの名前のまま）
     function normalImgPath(girl, n){
       return `assets/girl${girl}_normal_${String(n).padStart(2,"0")}.png`;
+    }
+    function topImgPath(girl){
+      return `assets/girl${girl}_top_01.png`;
     }
     function gameoverImgPath(girl){
       return `assets/girl${girl}_gameover_01.png`;
@@ -293,67 +398,10 @@
     function scoreImgPath(girl, rank, n){
       return `assets/girl${girl}_score_${rank}_${String(n).padStart(2,"0")}.png`;
     }
-    function randomNormalIndex(){ return 1 + Math.floor(Math.random()*15); }
 
     /********************
-     * Scoring (あなたの確定仕様)
+     * 画面要素
      ********************/
-    const EXCEPTIONS = [
-      { key: "all_yes", percent: 48 },
-      { key: "all_no", percent: 42 },
-      { key: "all_chi", percent: 57 },
-      { key: "all_gyu", percent: 53 },
-      { key: "43_plus_1", percent: 44 },
-      { key: "11_each", percent: 51 }
-    ];
-
-    function diffToPercent(diff){
-      const t = Math.min(44, Math.max(0, diff));
-      const base = 68 - (t * 1.1);
-      const eased = Math.max(18, Math.min(72, base));
-      return Math.round(eased);
-    }
-    function percentToRank(p){
-      if (p >= 65) return "s";
-      if (p >= 58) return "a";
-      if (p >= 50) return "b";
-      if (p >= 42) return "c";
-      return "d";
-    }
-    function isChigyuted(p){ return p >= 100; }
-
-    function detectException(counts){
-      const total = counts.yes + counts.no + counts.chi + counts.gyu;
-      if (total !== 44) return null;
-
-      const arr = [counts.yes, counts.no, counts.chi, counts.gyu];
-      const max = Math.max(...arr);
-      const min = Math.min(...arr);
-
-      if (counts.yes === 44) return "all_yes";
-      if (counts.no === 44) return "all_no";
-      if (counts.chi === 44) return "all_chi";
-      if (counts.gyu === 44) return "all_gyu";
-
-      if (counts.yes===11 && counts.no===11 && counts.chi===11 && counts.gyu===11) return "11_each";
-      if (max === 43 && min === 0) return "43_plus_1";
-
-      return null;
-    }
-
-    /********************
-     * State
-     ********************/
-    let state = {
-      girl: null,
-      stage: 1,                 // 1..45
-      gameOver: false,
-      cleared: false,
-      mode: "NORMAL",           // NORMAL / SCORE
-      counts: { yes:0, no:0, chi:0, gyu:0 }, // 44問集計
-      lastChoice: null
-    };
-
     const el = {
       mainImg: document.getElementById("mainImg"),
       bubble: document.getElementById("bubbleText"),
@@ -361,17 +409,34 @@
       modeLabel: document.getElementById("modeLabel"),
       bestStage: document.getElementById("bestStage"),
       reachedStage: document.getElementById("reachedStage"),
+
+      topBtns: document.getElementById("topBtns"),
       choices: document.getElementById("choices"),
-      btnRetry: document.getElementById("btnRetry"),
+      footerBtns: document.getElementById("footerBtns"),
+
+      btnStartNormal: document.getElementById("btnStartNormal"),
+      btnStartChiMusume: document.getElementById("btnStartChiMusume"),
+      btnChangeGirl: document.getElementById("btnChangeGirl"),
+
       btnBackTop: document.getElementById("btnBackTop"),
-      girlModal: document.getElementById("girlModal"),
-      react: document.getElementById("react"),
-      reactText: document.getElementById("reactText"),
+      btnRetry: document.getElementById("btnRetry"),
+
+      logoOverlay: document.getElementById("logoOverlay"),
+      topBar: document.getElementById("topBar"),
+
+      girlModal: document.getElementById("girlModal")
     };
 
-    function enableChoices(on){
-      [...el.choices.querySelectorAll("button.choice")].forEach(b=>b.disabled = !on);
-    }
+    /********************
+     * 状態
+     ********************/
+    const state = {
+      screen: "TOP",       // TOP / PLAY / GAMEOVER / CLEAR / SCORE
+      mode: "NORMAL",      // NORMAL / CHI_MUSUME
+      girl: null,          // A/B/C
+      stage: 1,
+      lastChoice: null
+    };
 
     function loadSaved(){
       const g = localStorage.getItem(LS.girl);
@@ -381,11 +446,6 @@
       const reached = parseInt(localStorage.getItem(LS.reachedStage) || "0", 10);
       el.bestStage.textContent = best ? `STAGE ${best}` : "—";
       el.reachedStage.textContent = reached ? `STAGE ${reached}` : "—";
-
-      try{
-        const c = JSON.parse(localStorage.getItem(LS.counts) || "null");
-        if (c && typeof c === "object") state.counts = { ...state.counts, ...c };
-      }catch(e){}
     }
 
     function saveBestAndReached(){
@@ -393,205 +453,267 @@
       const reached = Math.max(parseInt(localStorage.getItem(LS.reachedStage) || "0", 10), state.stage);
       localStorage.setItem(LS.reachedStage, String(reached));
       if (state.stage > best) localStorage.setItem(LS.bestStage, String(state.stage));
-
       el.bestStage.textContent = `STAGE ${parseInt(localStorage.getItem(LS.bestStage),10)}`;
       el.reachedStage.textContent = `STAGE ${parseInt(localStorage.getItem(LS.reachedStage),10)}`;
     }
 
-    function showGirlSelect(force=false){
-      if (!state.girl || force) el.girlModal.classList.remove("hidden");
+    /********************
+     * 時間帯フィルター（画像差し替え無し）
+     ********************/
+    function getTimeFilter(){
+      const h = new Date().getHours();
+      // 朝(6-10) / 昼(11-15) / 夕(16-18) / 夜(19-23) / 深夜(0-5)
+      if (h >= 6 && h <= 10) return "brightness(1.05) contrast(1.03) saturate(1.05)";
+      if (h >= 11 && h <= 15) return "brightness(1.00) contrast(1.00) saturate(1.00)";
+      if (h >= 16 && h <= 18) return "brightness(0.98) contrast(1.02) saturate(1.08) sepia(0.08)";
+      if (h >= 19 && h <= 23) return "brightness(0.90) contrast(1.05) saturate(0.95) hue-rotate(-8deg)";
+      return "brightness(0.82) contrast(1.08) saturate(0.85) hue-rotate(-16deg)";
     }
-    function hideGirlSelect(){ el.girlModal.classList.add("hidden"); }
 
+    function applyFilter(){
+      el.mainImg.style.filter = getTimeFilter();
+    }
+
+    /********************
+     * 画面切り替え
+     ********************/
+    function showScreen(screen){
+      state.screen = screen;
+
+      const isTop = (screen === "TOP");
+      const isPlay = (screen === "PLAY");
+      const isGameover = (screen === "GAMEOVER");
+      const isClear = (screen === "CLEAR");
+      const isScore = (screen === "SCORE");
+
+      // TOPはロゴ表示、TOPボタン表示
+      el.logoOverlay.classList.toggle("hidden", !isTop);
+      el.topBtns.classList.toggle("hidden", !isTop);
+
+      // プレイ中だけ選択肢を表示
+      el.choices.classList.toggle("hidden", !isPlay);
+
+      // フッタは TOP以外で表示（GO/クリア/スコア含む）
+      el.footerBtns.classList.toggle("hidden", isTop);
+
+      // TOPバーは TOP以外で表示（プレイ/GO/クリア/スコア）
+      el.topBar.classList.toggle("hidden", isTop);
+
+      // 「もう一回」はゲームオーバーのみ1秒後表示
+      if (isGameover){
+        el.btnRetry.classList.add("hidden");
+        setTimeout(()=> el.btnRetry.classList.remove("hidden"), 1000);
+      } else {
+        el.btnRetry.classList.add("hidden");
+      }
+
+      render();
+    }
+
+    function enableChoices(on){
+      document.querySelectorAll("button.choice").forEach(b => b.disabled = !on);
+    }
+
+    function randomNormalIndex(){
+      return 1 + Math.floor(Math.random() * 15);
+    }
+
+    /********************
+     * レンダリング
+     ********************/
+    function render(){
+      applyFilter();
+
+      if (!state.girl){
+        // 女の子未選択ならTOPで固定
+        el.mainImg.src = "assets/start_bg.png";
+        el.bubble.innerHTML = "女の子を選んでね";
+        el.stageLabel.textContent = "—";
+        el.modeLabel.textContent = "—";
+        enableChoices(false);
+        return;
+      }
+
+      if (state.screen === "TOP"){
+        el.mainImg.src = "assets/start_bg.png";
+        el.bubble.innerHTML = "モードを選んでスタート";
+        el.stageLabel.textContent = "—";
+        el.modeLabel.textContent = "—";
+        enableChoices(false);
+        return;
+      }
+
+      // 共通表示
+      el.stageLabel.textContent = String(state.stage);
+      el.modeLabel.textContent = (state.mode === "CHI_MUSUME") ? "CHI" : "NORMAL";
+
+      if (state.screen === "PLAY"){
+        // プレイ中：毎回 “普通の顔” をランダム表示
+        el.mainImg.src = normalImgPath(state.girl, randomNormalIndex());
+        el.bubble.textContent = QUESTIONS[state.stage - 1];
+        enableChoices(true);
+        return;
+      }
+
+      if (state.screen === "GAMEOVER"){
+        const isChi = (state.lastChoice === "chi");
+        el.mainImg.src = isChi ? chiGameoverImgPath(state.girl) : gameoverImgPath(state.girl);
+        el.bubble.innerHTML = "……";
+        enableChoices(false);
+        return;
+      }
+
+      if (state.screen === "CLEAR"){
+        el.mainImg.src = clearImgPath(state.girl, 1 + Math.floor(Math.random()*3));
+        el.bubble.innerHTML = "クリア";
+        enableChoices(false);
+        return;
+      }
+
+      if (state.screen === "SCORE"){
+        // チギュテッド確定（あなたの最新指定）
+        const percent = (SCORE_MODE === "RANDOM_80_100")
+          ? (80 + Math.floor(Math.random()*21))
+          : 100;
+
+        // 画像はSランク固定でもいいし、ランダムでもOK
+        // 今はチギュテッド=100%なのでSを使う
+        el.mainImg.src = scoreImgPath(state.girl, "s", 1 + Math.floor(Math.random()*3));
+
+        // 特別エンディング（チギュテッド）
+        el.bubble.innerHTML =
+          `チー牛度 <b style="font-size:20px;letter-spacing:.04em">${percent}%</b><br>` +
+          `<small style="margin-top:8px;display:block">チー牛ギフテッド（チギュテッド）</small>` +
+          `<small style="margin-top:6px;display:block">（特別エンディング）</small>`;
+        enableChoices(false);
+        return;
+      }
+    }
+
+    /********************
+     * 女の子選択
+     ********************/
+    function showGirlSelect(force=false){
+      if (!state.girl || force){
+        el.girlModal.classList.remove("hidden");
+      }
+    }
+    function hideGirlSelect(){
+      el.girlModal.classList.add("hidden");
+    }
     function setGirl(g){
       state.girl = g;
       localStorage.setItem(LS.girl, g);
       hideGirlSelect();
-      goTop();
+      showScreen("TOP");
     }
-
-    function goTop(){
-      state.stage = 1;
-      state.gameOver = false;
-      state.cleared = false;
-      state.mode = "NORMAL";
-      state.counts = { yes:0, no:0, chi:0, gyu:0 };
-      localStorage.setItem(LS.counts, JSON.stringify(state.counts));
-      el.btnRetry.classList.add("hidden");
-      enableChoices(true);
-      renderStage();
-    }
-
-    function renderStage(){
-      el.modeLabel.textContent = state.mode;
-      el.stageLabel.textContent = String(state.stage);
-
-      el.bubble.textContent = QUESTIONS[state.stage - 1];
-
-      if (state.gameOver){
-        const isChi = (state.lastChoice === "chi");
-        el.mainImg.src = isChi ? chiGameoverImgPath(state.girl) : gameoverImgPath(state.girl);
-        el.btnRetry.classList.add("hidden");
-        setTimeout(()=> el.btnRetry.classList.remove("hidden"), 1000);
-      } else if (state.cleared){
-        el.mainImg.src = clearImgPath(state.girl, 1 + Math.floor(Math.random()*3));
-        el.btnRetry.classList.add("hidden");
-      } else {
-        el.mainImg.src = normalImgPath(state.girl, randomNormalIndex());
-        el.btnRetry.classList.add("hidden");
-      }
-    }
-
-    /********************
-     * Reaction system (巻き戻り防止)
-     ********************/
-    let reactToken = 0;
-    function showReaction(choice, ms=420){
-      reactToken++;
-      const my = reactToken;
-
-      // 表示文：昔の “ギュウ❤” 風（押したボタンで変える）
-      const map = {
-        yes: "はい",
-        no: "いいえ",
-        chi: "チー",
-        gyu: "ギュウ❤",
-      };
-      el.reactText.textContent = map[choice] ?? "…";
-      el.react.classList.add("show");
-
-      setTimeout(()=>{
-        if (my !== reactToken) return;
-        el.react.classList.remove("show");
-      }, ms);
-    }
-
-    /********************
-     * Answer (1〜44: どれでも進む / 45: ギュウ以外即死)
-     ********************/
-    function onAnswer(choice){
-      if (state.gameOver || state.cleared) return;
-      if (!state.girl) return;
-
-      state.lastChoice = choice;
-      enableChoices(false);          // 連打防止
-      showReaction(choice, 420);     // 必ずリアクション
-
-      // 45問目の即死（ここだけ）
-      if (state.stage === 45 && choice !== "gyu"){
-        state.gameOver = true;
-        saveBestAndReached();
-        renderStage();
-        return;
-      }
-
-      // 44問集計（45問目は集計しない）
-      if (state.stage <= 44){
-        state.counts[choice] = (state.counts[choice] || 0) + 1;
-        localStorage.setItem(LS.counts, JSON.stringify(state.counts));
-      }
-
-      // 次の問題へ：リアクションが見えるように少し待つ
-      const myToken = ++reactToken; // ここで古いタイマーを無効化する目的も兼ねる
-      setTimeout(()=>{
-        if (myToken !== reactToken) return;
-
-        if (state.stage === 45){
-          // クリア → 採点
-          state.cleared = true;
-          saveBestAndReached();
-          showScore();
-          return;
-        }
-
-        state.stage += 1;
-        saveBestAndReached();
-        renderStage();
-        enableChoices(true);
-      }, 520);
-    }
-
-    function showScore(){
-      state.mode = "SCORE";
-      el.modeLabel.textContent = state.mode;
-
-      const arr = [state.counts.yes, state.counts.no, state.counts.chi, state.counts.gyu];
-      const diff = Math.max(...arr) - Math.min(...arr);
-
-      let percent = diffToPercent(diff);
-
-      const exKey = detectException(state.counts);
-      if (exKey){
-        const ex = EXCEPTIONS.find(x=>x.key===exKey);
-        if (ex) percent = ex.percent;
-      }
-
-      if (!exKey){
-        if (Math.random() < 0.02) percent = 100;
-      }
-
-      const rank = percentToRank(percent);
-      el.mainImg.src = scoreImgPath(state.girl, rank, 1 + Math.floor(Math.random()*3));
-
-      // %アニメーション
-      const bubble = el.bubble;
-      bubble.innerHTML = `チー牛度 <b style="font-size:18px;letter-spacing:.04em">0%</b><small>計算中…</small>`;
-
-      let cur = 0;
-      const target = percent;
-      const step = Math.max(1, Math.floor(target / 24));
-
-      const timer = setInterval(()=>{
-        cur += step;
-        if (cur >= target){
-          cur = target;
-          clearInterval(timer);
-
-          setTimeout(()=>{
-            const chig = isChigyuted(target);
-            const rankLabel = chig ? "チー牛ギフテッド（チギュテッド）" : `RANK ${rank.toUpperCase()}`;
-            const tone = chig ? "（上位2%）" : "";
-            bubble.innerHTML =
-              `チー牛度 <b style="font-size:20px;letter-spacing:.04em">${target}%</b><br>` +
-              `<small style="margin-top:8px;display:block">${rankLabel} ${tone}</small>`;
-          }, 500);
-
-          enableChoices(false);
-          el.btnRetry.classList.add("hidden");
-        } else {
-          bubble.innerHTML = `チー牛度 <b style="font-size:18px;letter-spacing:.04em">${cur}%</b><small>計算中…</small>`;
-        }
-      }, 30);
-    }
-
-    /********************
-     * Events
-     ********************/
-    document.querySelectorAll("button.choice").forEach(btn=>{
-      btn.addEventListener("click", ()=> onAnswer(btn.dataset.choice));
-    });
-
-    el.btnBackTop.addEventListener("click", ()=> showGirlSelect(true));
-    el.btnRetry.addEventListener("click", ()=> goTop());
 
     document.querySelectorAll(".girlCard").forEach(card=>{
       card.addEventListener("click", ()=> setGirl(card.dataset.girl));
     });
 
     /********************
-     * Boot
+     * ゲーム開始・進行
+     ********************/
+    function start(mode){
+      state.mode = mode;
+      state.stage = 1;
+      state.lastChoice = null;
+      showScreen("PLAY");
+    }
+
+    function reactText(choice){
+      // 「どの選択肢でも反応」：前の感じに寄せて短い一言
+      if (choice === "yes") return "うん";
+      if (choice === "no")  return "へぇ";
+      if (choice === "chi") return "チー…";
+      return "ギュウ";
+    }
+
+    function onAnswer(choice){
+      if (state.screen !== "PLAY") return;
+
+      state.lastChoice = choice;
+
+      // 押したら即リアクション（吹き出しだけ一瞬）
+      const qText = QUESTIONS[state.stage - 1];
+      el.bubble.textContent = reactText(choice);
+
+      setTimeout(()=>{
+        // STAGE45だけ「ギュウ以外は即死」
+        if (state.stage === FINAL_STAGE){
+          if (choice !== "gyu"){
+            // ゲームオーバー
+            saveBestAndReached();
+            showScreen("GAMEOVER");
+            return;
+          }
+          // クリア→スコア（チギュテッド特別）
+          saveBestAndReached();
+          showScreen("CLEAR");
+          setTimeout(()=> showScreen("SCORE"), 700);
+          return;
+        }
+
+        // 1〜44は即死しない。普通に次へ。
+        state.stage += 1;
+        saveBestAndReached();
+        showScreen("PLAY");
+      }, 380);
+    }
+
+    document.querySelectorAll("button.choice").forEach(btn=>{
+      btn.addEventListener("click", ()=> onAnswer(btn.dataset.choice));
+    });
+
+    /********************
+     * ボタン類
+     ********************/
+    el.btnStartNormal.addEventListener("click", ()=> start("NORMAL"));
+    el.btnStartChiMusume.addEventListener("click", ()=> start("CHI_MUSUME"));
+
+    el.btnChangeGirl.addEventListener("click", ()=> showGirlSelect(true));
+
+    el.btnBackTop.addEventListener("click", ()=> showScreen("TOP"));
+
+    el.btnRetry.addEventListener("click", ()=>{
+      // 女の子とモードは維持して最初から
+      start(state.mode || "NORMAL");
+    });
+
+    /********************
+     * 起動
      ********************/
     loadSaved();
-    showGirlSelect(false);
+    if (!state.girl) showGirlSelect(false);
+    showScreen("TOP");
 
+    // 念のため：初回TOP表示画像
     if (state.girl){
-      enableChoices(true);
-      renderStage();
-    } else {
-      el.mainImg.src = "assets/placeholder.png";
-      el.bubble.textContent = "女の子を選んでね";
-      enableChoices(false);
+      el.mainImg.src = "assets/start_bg.png";
+      applyFilter();
     }
   </script>
+
+  <!--
+    ▼ 必要ファイル（今の名前のまま）
+    assets/
+      start_bg.png
+      logo_chi_gyuu.png
+
+      girlA_icon.png
+      girlB_icon.png
+      girlC_icon.png
+
+      girlA_top_01.png（※今は使ってないけど置いてOK）
+      girlA_normal_01.png ... girlA_normal_15.png
+      girlA_gameover_01.png
+      girlA_chi_gameover_01.png
+      girlA_clear_01.png ... girlA_clear_03.png
+      girlA_score_s_01.png ... girlA_score_s_03.png（チギュテッドで使う）
+      （B/C も同様）
+
+    ※「時間帯フィルター」は画像にCSS filterをかけるだけ。画像差し替え無し。
+  -->
 </body>
 </html>
