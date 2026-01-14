@@ -55,7 +55,6 @@
       box-shadow: var(--shadow);
       overflow:hidden;
     }
-
     .imgArea{
       position:relative;
       width:100%;
@@ -158,7 +157,6 @@
       line-height:1.6;
     }
 
-    /* modal */
     .modalBg{
       position:fixed; inset:0;
       background: rgba(0,0,0,.55);
@@ -254,13 +252,11 @@
     </div>
 
     <div class="note">
-      ※ 画像は <b>/assets/</b> に置く（GitHub Pagesなら index.html と同階層に assets フォルダ）<br>
-      ※ 「もう一回」はゲームオーバー時に <b>1秒後</b> に表示<br>
-      ※ iconはあなたの現状に合わせて <b>girlA_icon.png</b> 形式で読みに行きます（.jpgじゃない）
+      ※ 即死（間違えたらゲームオーバー）は <b>STAGE45だけ</b><br>
+      ※ 1〜44 は間違えても進行（ゲームオーバーにならない）
     </div>
   </div>
 
-  <!-- Girl Select Modal -->
   <div class="modalBg hidden" id="girlModal">
     <div class="modal">
       <h2>女の子を選んでね</h2>
@@ -284,9 +280,6 @@
   </div>
 
   <script>
-    /********************
-     * LocalStorage keys
-     ********************/
     const LS = {
       girl: "chi_gyu_selected_girl",
       bestStage: "chi_gyu_best_stage",
@@ -294,9 +287,6 @@
       counts: "chi_gyu_choice_counts"
     };
 
-    /********************
-     * Questions (45)
-     ********************/
     const QUESTIONS = [
       { q: "あなたはチー牛ですか？", a: "yes" },
       { q: "チーと言えば？", a: "gyu" },
@@ -304,27 +294,19 @@
       { q: "石原さとみさんに「ギュウ」と言ってもらいたい？", a: "yes" },
       { q: "チーズ牛丼を頼んだ人を一瞬だけ見てしまったことはありますか？", a: "yes" },
       { q: "知らない人を見て「チー牛かも」と思ってしまったことはありますか？", a: "yes" },
-
       { q: "麻雀には、チーをされた瞬間にギュウと答えるとチーを取り消す『チーギュウ返し』という技がある。本当だと思いますか？", a: "yes" },
       { q: "あなたは三度の飯よりチー牛が好きって本当ですか？", a: "yes" },
-
       { q: "山本由伸選手の「負けると言う選択肢はない」という名言はとてもカッコ良かったですね？", a: "yes" },
       { q: "山本由伸選手に「チーズ牛丼を食べないという選択肢はない」と言ってもらいたいですか？", a: "yes" },
-
       { q: "ギリシャの哲学者アリストテレスの「すべての者は生まれながらに知恵を求める。」有名な名言は知っていますか？", a: "yes" },
       { q: "チー牛界隈にも「すべての者は生まれながらにチーズ牛丼を求める。」という名言があるのを知っていますか？", a: "yes" },
-
       ...Array.from({length: 45 - 12}, (_,i)=>({
         q: `（仮）問題 ${i+13}：あなたは「ギュウ」と言ってもらえると嬉しい？`,
         a: "yes"
       }))
     ];
-    // 45問目：ギュウ以外即死
     QUESTIONS[44] = { q: "【最終】ここは「ギュウ」以外は即ゲームオーバーです。どうする？", a: "gyu", finalMustGyu: true };
 
-    /********************
-     * Image path helpers
-     ********************/
     const FALLBACK_IMG = "assets/start_bg.png";
 
     function normalImgPath(girl, n){
@@ -346,19 +328,6 @@
       return `assets/girl${girl}_score_${rank}_${String(n).padStart(2,"0")}.png`;
     }
 
-    function setImgSafe(src){
-      const img = el.mainImg;
-      img.onerror = null;
-      img.src = src;
-      img.onerror = () => {
-        img.onerror = null;
-        img.src = FALLBACK_IMG;
-      };
-    }
-
-    /********************
-     * Scoring
-     ********************/
     const EXCEPTIONS = [
       { key: "all_yes", percent: 48 },
       { key: "all_no", percent: 42 },
@@ -395,22 +364,18 @@
       if (counts.no === 44) return "all_no";
       if (counts.chi === 44) return "all_chi";
       if (counts.gyu === 44) return "all_gyu";
-
       if (counts.yes===11 && counts.no===11 && counts.chi===11 && counts.gyu===11) return "11_each";
       if (max === 43 && min === 0) return "43_plus_1";
       return null;
     }
 
-    /********************
-     * State
-     ********************/
     let state = {
-      girl: null,         // "A"/"B"/"C"
-      stage: 1,           // 1〜45
+      girl: null,
+      stage: 1,
       gameOver: false,
       cleared: false,
       mode: "NORMAL",
-      counts: { yes:0, no:0, chi:0, gyu:0 }, // 44問集計
+      counts: { yes:0, no:0, chi:0, gyu:0 },
       lastWrongChoice: null
     };
 
@@ -427,6 +392,16 @@
       girlModal: document.getElementById("girlModal")
     };
 
+    function setImgSafe(src){
+      const img = el.mainImg;
+      img.onerror = null;
+      img.src = src;
+      img.onerror = () => {
+        img.onerror = null;
+        img.src = FALLBACK_IMG;
+      };
+    }
+
     function enableChoices(on){
       [...el.choices.querySelectorAll("button.choice")].forEach(b=>b.disabled = !on);
     }
@@ -440,9 +415,6 @@
       el.bestStage.textContent = best ? `STAGE ${best}` : "—";
       el.reachedStage.textContent = reached ? `STAGE ${reached}` : "—";
 
-      // counts は途中再開に使わない（誤再開が嫌ならコメントアウトでもOK）
-      // ただしここは「採点の継続」より「安全」を優先して、ロードだけするが、
-      // ゲーム開始時(goTop)に必ずリセットする運用にしてる。
       try{
         const c = JSON.parse(localStorage.getItem(LS.counts) || "null");
         if (c && typeof c === "object") state.counts = { ...state.counts, ...c };
@@ -464,18 +436,16 @@
     function showGirlSelect(force=false){
       if (!state.girl || force){
         el.girlModal.classList.remove("hidden");
-        enableChoices(false); // ここが重要：女の子未選択では絶対押せない
+        enableChoices(false);
       }
     }
-    function hideGirlSelect(){
-      el.girlModal.classList.add("hidden");
-    }
+    function hideGirlSelect(){ el.girlModal.classList.add("hidden"); }
 
     function setGirl(g){
       state.girl = g;
       localStorage.setItem(LS.girl, g);
       hideGirlSelect();
-      goTop(); // 選択したら最初から
+      goTop();
     }
 
     function goTop(){
@@ -491,7 +461,6 @@
       el.stageLabel.textContent = String(state.stage);
 
       if (!state.girl){
-        // 念のため（トップに戻る押した直後など）
         el.bubble.textContent = "女の子を選んでね";
         setImgSafe(FALLBACK_IMG);
         showGirlSelect(true);
@@ -499,7 +468,7 @@
       }
 
       enableChoices(true);
-      renderStage(true); // stage1は top_01 を優先表示
+      renderStage(true);
     }
 
     function renderStage(preferTop=false){
@@ -537,6 +506,11 @@
       }
     }
 
+    /********************
+     * ここが変更点：
+     * ・STAGE1〜44は間違えてもゲームオーバーにしない
+     * ・即死はSTAGE45だけ
+     ********************/
     function onAnswer(choice){
       if (!state.girl){
         showGirlSelect(true);
@@ -546,7 +520,7 @@
 
       const qObj = QUESTIONS[state.stage - 1];
 
-      // 45問目：ギュウ以外即死
+      // ★ 即死はSTAGE45だけ（finalMustGyu の時だけ）
       if (qObj.finalMustGyu && choice !== "gyu"){
         state.gameOver = true;
         state.lastWrongChoice = choice;
@@ -556,27 +530,17 @@
         return;
       }
 
-      const correct = (choice === qObj.a);
-
-      if (!correct){
-        state.gameOver = true;
-        state.lastWrongChoice = choice;
-        enableChoices(false);
-        renderStage();
-        saveBestAndReached();
-        return;
-      }
-
-      // 正解演出：ギュウ固定（評価文なし）
-      const prevText = el.bubble.textContent;
-      el.bubble.textContent = "ギュウ";
-      setTimeout(()=> { el.bubble.textContent = prevText; }, 450);
-
-      // 44問分集計
+      // ★ STAGE1〜44は「正誤に関係なく進行」
+      // ただし採点用カウントは “実際に押したもの” をそのまま数える（あなたの44問集計仕様）
       if (state.stage <= 44){
         state.counts[choice] = (state.counts[choice] || 0) + 1;
         localStorage.setItem(LS.counts, JSON.stringify(state.counts));
       }
+
+      // 正解演出：常に「ギュウ」固定
+      const prevText = el.bubble.textContent;
+      el.bubble.textContent = "ギュウ";
+      setTimeout(()=> { el.bubble.textContent = prevText; }, 450);
 
       // 次へ or クリア
       if (state.stage === 45){
@@ -607,7 +571,6 @@
         if (ex) percent = ex.percent;
       }
 
-      // 2%枠：100%（チギュテッド）
       if (!exKey && Math.random() < 0.02) percent = 100;
 
       const rank = percentToRank(percent);
@@ -643,9 +606,6 @@
       }, 30);
     }
 
-    /********************
-     * Events
-     ********************/
     document.querySelectorAll("button.choice").forEach(btn=>{
       btn.addEventListener("click", ()=> onAnswer(btn.dataset.choice));
     });
@@ -664,12 +624,7 @@
       });
     });
 
-    /********************
-     * Boot
-     ********************/
     loadSaved();
-
-    // 起動時：女の子があれば即スタート、なければモーダル
     if (state.girl){
       goTop();
     } else {
@@ -679,20 +634,5 @@
       showGirlSelect(true);
     }
   </script>
-
-  <!--
-    ▼ assets 必須（例）
-    assets/
-      start_bg.png  ← これを初期表示/フォールバックに使う（今あなたのassetsにある）
-      girlA_icon.png / girlB_icon.png / girlC_icon.png
-
-      girlA_top_01.png
-      girlA_normal_01.png ... girlA_normal_15.png
-      girlA_gameover_01.png
-      girlA_chi_gameover_01.png
-      girlA_clear_01.png ... girlA_clear_03.png
-      girlA_score_s_01.png ... girlA_score_d_03.png
-      （B/C も同様）
-  -->
 </body>
 </html>
