@@ -6,633 +6,754 @@
   <title>チーと言えばギュウと答える</title>
   <style>
     :root{
-      --bg:#0f0f10;
-      --text:#f2f2f2;
-      --sub:#b9bcc6;
-      --danger:#fb7185;
-      --shadow: 0 12px 30px rgba(0,0,0,.35);
-      --radius:18px;
+      --bg:#000;
+      --text:#fff;
+      --sub:rgba(255,255,255,.75);
+
+      /* 4択ボタン（昔の“色つき”感） */
+      --c-no:  rgba(34,197,94,.55);   /* いいえ: green */
+      --c-gyu: rgba(239,68,68,.55);   /* ギュウ: red */
+      --c-yes: rgba(245,158,11,.55);  /* はい: amber */
+      --c-chi: rgba(34,197,94,.35);   /* チー: teal/green */
+      --btn-border: rgba(255,255,255,.18);
+
+      --shadow: 0 14px 30px rgba(0,0,0,.55);
+      --radius: 18px;
     }
     *{box-sizing:border-box}
     body{
       margin:0;
       font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
-      background: radial-gradient(1200px 800px at 20% 0%, #1a1b20 0%, var(--bg) 55%);
-      color:var(--text);
+      background: var(--bg);
+      color: var(--text);
     }
     .wrap{
-      max-width: 520px;
+      max-width: 740px;
       margin: 0 auto;
-      padding: 18px 14px 30px;
+      padding: 14px 12px 24px;
     }
+
+    /* 上部：昔の「タイトル左 / 進行右」 */
     header{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      margin-bottom: 12px;
+      padding: 6px 2px 10px;
     }
     .brand{
-      font-weight:800;
-      letter-spacing:.06em;
-      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: .02em;
+      font-size: 16px;
       opacity:.95;
     }
-    .pill{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      color:var(--sub);
+    .progress{
+      font-weight: 900;
+      letter-spacing:.03em;
+      opacity:.9;
+    }
+    .progress small{
+      font-weight:700;
+      opacity:.8;
+      margin-left:10px;
+    }
+    .metaLine{
+      margin-top:6px;
       font-size:12px;
-      flex-wrap:wrap;
+      color: var(--sub);
+      display:flex;
+      gap:10px;
       justify-content:flex-end;
     }
-    .pill b{color:var(--text)}
+
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border: 1px solid rgba(255,255,255,.08);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
       overflow:hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.10);
+      background: #0b0b0b;
     }
+
+    /* 画像エリア */
     .imgArea{
       position:relative;
       width:100%;
-      aspect-ratio: 3 / 4;
       background:#111;
+      aspect-ratio: 3 / 4;
     }
     .imgArea img{
       width:100%;
       height:100%;
-      object-fit: cover;
+      object-fit:cover;
       display:block;
-      background:#111;
     }
-    .topBar{
+
+    /* 上のピル（STAGE / MODE）※昔の雰囲気に寄せて控えめ */
+    .pillRow{
       position:absolute;
-      left:10px; right:10px; top:10px;
+      top: 12px;
+      left: 12px;
+      right: 12px;
       display:flex;
       justify-content:space-between;
-      align-items:center;
       pointer-events:none;
     }
-    .badge{
+    .pill{
       background: rgba(0,0,0,.35);
-      border: 1px solid rgba(255,255,255,.14);
-      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.18);
       border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 12px;
-      color:#fff;
-      pointer-events:none;
+      padding: 8px 12px;
+      font-weight: 900;
+      letter-spacing:.03em;
+      backdrop-filter: blur(6px);
     }
-    .badge .sub{opacity:.85; font-weight:600}
-    .badge .val{font-weight:900; letter-spacing:.02em}
 
-    .bubble{
+    /* 正解演出：画像に「ギュウ❤️」ドン！（昔の核） */
+    .overlayGyu{
       position:absolute;
-      left: 10px;
-      right: 10px;
-      bottom: 12px;
-      background: rgba(0,0,0,.42);
-      border: 1px solid rgba(255,255,255,.16);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      padding: 12px 12px;
-      line-height: 1.45;
-      font-size: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,.28);
+      inset:0;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding-top: 64px;
+      pointer-events:none;
+      opacity:0;
+      transform: translateY(-6px);
+      transition: opacity .10s ease, transform .20s ease;
     }
-    .bubble small{display:block;color:var(--sub);font-size:12px;margin-top:6px}
+    .overlayGyu.show{
+      opacity:1;
+      transform: translateY(0);
+    }
+    .overlayGyu .txt{
+      font-size: 34px;
+      font-weight: 1000;
+      letter-spacing:.02em;
+      text-shadow: 0 10px 24px rgba(0,0,0,.55);
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      padding: 10px 18px;
+      backdrop-filter: blur(6px);
+    }
 
+    /* 問題文：画像の下に“帯”で表示（邪魔しない） */
+    .questionBar{
+      padding: 14px 14px 12px;
+      background: rgba(0,0,0,.55);
+      border-top: 1px solid rgba(255,255,255,.08);
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing:.02em;
+    }
+    .questionBar small{
+      display:block;
+      margin-top:6px;
+      font-size:12px;
+      color: var(--sub);
+      font-weight:700;
+      letter-spacing:0;
+    }
+
+    /* 4択：色つきで“ゲーム感” */
     .choices{
-      padding: 12px;
       display:grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
+      padding: 14px;
+      background: rgba(0,0,0,.55);
+      border-top: 1px solid rgba(255,255,255,.08);
     }
-    button.choice{
-      border: 1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
-      color:var(--text);
-      border-radius: 14px;
-      padding: 14px 10px;
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing: .04em;
+    .choice{
+      border: 1px solid var(--btn-border);
+      border-radius: 16px;
+      padding: 16px 12px;
+      font-size: 18px;
+      font-weight: 1000;
+      letter-spacing:.06em;
+      color: #fff;
+      background: rgba(255,255,255,.08);
       cursor:pointer;
-      transition: transform .06s ease, filter .15s ease, border-color .15s ease;
+      transition: transform .06s ease, filter .15s ease;
     }
-    button.choice:active{transform: translateY(1px) scale(.995)}
-    button.choice:disabled{
-      opacity:.45;
+    .choice:active{transform: translateY(1px) scale(.995)}
+    .choice:disabled{
+      opacity:.35;
       cursor:not-allowed;
       filter: grayscale(.2);
     }
+    .choice.no   { background: var(--c-no);  }
+    .choice.gyu  { background: var(--c-gyu); }
+    .choice.yes  { background: var(--c-yes); }
+    .choice.chi  { background: var(--c-chi); }
 
+    /* 下ボタン */
     .footerBtns{
       display:flex;
-      gap:10px;
-      padding: 0 12px 12px;
+      gap: 12px;
+      padding: 0 14px 14px;
+      background: rgba(0,0,0,.55);
+      border-top: 1px solid rgba(255,255,255,.08);
     }
     .btn{
       flex:1;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.05);
-      color: var(--text);
-      border-radius: 14px;
-      padding: 12px 10px;
-      font-weight: 800;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 16px;
+      padding: 14px 12px;
+      font-size: 15px;
+      font-weight: 1000;
+      letter-spacing:.06em;
+      color:#fff;
+      background: rgba(255,255,255,.07);
       cursor:pointer;
     }
     .btn:active{transform: translateY(1px)}
-    .btn.secondary{color:var(--sub)}
-    .btn.danger{border-color: rgba(251,113,133,.35); color:#ffd0d8}
-    .hidden{display:none !important}
-
-    .note{
-      margin-top:10px;
-      font-size:12px;
-      color:var(--sub);
-      line-height:1.6;
+    .btn.hidden{display:none !important}
+    .btn.retry{
+      border-color: rgba(239,68,68,.45);
+      background: rgba(239,68,68,.18);
     }
 
+    /* 女の子選択モーダル */
     .modalBg{
       position:fixed; inset:0;
-      background: rgba(0,0,0,.55);
+      background: rgba(0,0,0,.72);
       display:flex;
       align-items:center;
       justify-content:center;
       padding: 18px;
       z-index: 999;
     }
+    .modalBg.hidden{display:none !important}
     .modal{
-      width:min(520px, 100%);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border: 1px solid rgba(255,255,255,.10);
+      width:min(720px, 100%);
+      background: rgba(15,15,15,.95);
+      border: 1px solid rgba(255,255,255,.16);
       border-radius: 18px;
       box-shadow: var(--shadow);
-      padding: 14px;
+      padding: 16px;
     }
     .modal h2{
-      margin: 6px 0 6px;
-      font-size: 16px;
+      margin: 4px 0 6px;
+      font-size: 18px;
       letter-spacing:.04em;
     }
-    .modal p{margin:0;color:var(--sub);font-size:13px;line-height:1.5}
+    .modal p{
+      margin:0;
+      color: var(--sub);
+      font-size: 13px;
+      line-height:1.5;
+    }
     .grid3{
-      margin-top: 12px;
+      margin-top: 14px;
       display:grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
     }
     .girlCard{
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      border-radius: 18px;
       overflow:hidden;
       cursor:pointer;
-      transition: transform .06s ease;
+      transition: transform .06s ease, filter .15s ease;
     }
     .girlCard:active{transform: translateY(1px)}
     .girlCard img{
       width:100%;
       aspect-ratio:1/1;
-      object-fit: cover;
+      object-fit:cover;
       display:block;
       background:#111;
     }
     .girlCard .cap{
-      padding: 8px 8px 10px;
       text-align:center;
-      font-weight:900;
-      font-size: 12px;
-      letter-spacing:.05em;
-      color: var(--text);
+      padding: 10px 8px 12px;
+      font-weight: 1000;
+      letter-spacing:.06em;
     }
     .tiny{
-      font-size:11px;
-      color:var(--sub);
-      margin-top:8px;
+      margin-top:10px;
+      font-size:12px;
+      color: var(--sub);
+    }
+
+    /* SCORE 表示（問題帯をスコア帯に） */
+    .scoreBig{
+      font-size: 22px;
+      font-weight: 1000;
+      letter-spacing:.04em;
+    }
+    .scoreSub{
+      margin-top:6px;
+      font-size: 12px;
+      color: var(--sub);
+      font-weight:800;
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand">チーと言えばギュウと答える</div>
-      <div class="pill">
-        <span>ベスト</span><b id="bestStage">—</b>
-        <span>／</span>
-        <span>到達</span><b id="reachedStage">—</b>
-      </div>
-    </header>
-
-    <div class="card">
-      <div class="imgArea">
-        <img id="mainImg" alt="girl" src="assets/start_bg.png" />
-        <div class="topBar">
-          <div class="badge"><span class="sub">STAGE</span> <span class="val" id="stageLabel">1</span></div>
-          <div class="badge"><span class="sub">MODE</span> <span class="val" id="modeLabel">NORMAL</span></div>
-        </div>
-        <div class="bubble" id="bubbleText">女の子を選んでね</div>
-      </div>
-
-      <div class="choices" id="choices">
-        <button class="choice" data-choice="yes">はい</button>
-        <button class="choice" data-choice="no">いいえ</button>
-        <button class="choice" data-choice="chi">チー</button>
-        <button class="choice" data-choice="gyu">ギュウ</button>
-      </div>
-
-      <div class="footerBtns">
-        <button class="btn secondary" id="btnBackTop">トップに戻る</button>
-        <button class="btn danger hidden" id="btnRetry">もう一回</button>
-      </div>
-    </div>
-
-    <div class="note">
-      ※ 即死（間違えたらゲームオーバー）は <b>STAGE45だけ</b><br>
-      ※ 1〜44 は間違えても進行（ゲームオーバーにならない）
-    </div>
+<div class="wrap">
+  <header>
+    <div class="brand">チーと言えばギュウと答える</div>
+    <div class="progress"><span id="progressText">1/45</span></div>
+  </header>
+  <div class="metaLine">
+    <span>ベスト <b id="bestStage">—</b></span>
+    <span>／</span>
+    <span>到達 <b id="reachedStage">—</b></span>
   </div>
 
-  <div class="modalBg hidden" id="girlModal">
-    <div class="modal">
-      <h2>女の子を選んでね</h2>
-      <p>最初は必ず選択。以後は「トップに戻る」から変更できます。</p>
-      <div class="grid3">
-        <div class="girlCard" data-girl="A">
-          <img src="assets/girlA_icon.png" alt="girlA">
-          <div class="cap">girlA</div>
-        </div>
-        <div class="girlCard" data-girl="B">
-          <img src="assets/girlB_icon.png" alt="girlB">
-          <div class="cap">girlB</div>
-        </div>
-        <div class="girlCard" data-girl="C">
-          <img src="assets/girlC_icon.png" alt="girlC">
-          <div class="cap">girlC</div>
-        </div>
+  <div class="card">
+    <div class="imgArea">
+      <img id="mainImg" alt="girl" src="" />
+      <div class="pillRow">
+        <div class="pill" id="stagePill">STAGE 1</div>
+        <div class="pill" id="modePill">MODE NORMAL</div>
       </div>
-      <div class="tiny">（icon は .png 前提。いまのassetsと一致）</div>
+
+      <div class="overlayGyu" id="gyuOverlay">
+        <div class="txt">ギュウ❤️</div>
+      </div>
+    </div>
+
+    <div class="questionBar" id="questionBar">
+      読み込み中…
+      <small id="questionSmall"></small>
+    </div>
+
+    <div class="choices" id="choices">
+      <button class="choice yes" data-choice="yes">はい</button>
+      <button class="choice no"  data-choice="no">いいえ</button>
+      <button class="choice chi" data-choice="chi">チー</button>
+      <button class="choice gyu" data-choice="gyu">ギュウ</button>
+    </div>
+
+    <div class="footerBtns">
+      <button class="btn" id="btnBackTop">トップに戻る</button>
+      <button class="btn retry hidden" id="btnRetry">もう一回</button>
     </div>
   </div>
+</div>
 
-  <script>
-    const LS = {
-      girl: "chi_gyu_selected_girl",
-      bestStage: "chi_gyu_best_stage",
-      reachedStage: "chi_gyu_reached_stage",
-      counts: "chi_gyu_choice_counts"
-    };
+<!-- Girl Select Modal -->
+<div class="modalBg hidden" id="girlModal">
+  <div class="modal">
+    <h2>女の子を選んでね</h2>
+    <p>最初は必ず選択。以後は「トップに戻る」から変更できます。</p>
+    <div class="grid3">
+      <div class="girlCard" data-girl="A">
+        <img src="assets/girlA_icon.png" alt="girlA">
+        <div class="cap">girlA</div>
+      </div>
+      <div class="girlCard" data-girl="B">
+        <img src="assets/girlB_icon.png" alt="girlB">
+        <div class="cap">girlB</div>
+      </div>
+      <div class="girlCard" data-girl="C">
+        <img src="assets/girlC_icon.png" alt="girlC">
+        <div class="cap">girlC</div>
+      </div>
+    </div>
+    <div class="tiny">（icon は今のassetsに合わせて <b>.png</b> 前提）</div>
+  </div>
+</div>
 
-    const QUESTIONS = [
-      { q: "あなたはチー牛ですか？", a: "yes" },
-      { q: "チーと言えば？", a: "gyu" },
-      { q: "石原さとみさんに「チー」と言われたら？", a: "gyu" },
-      { q: "石原さとみさんに「ギュウ」と言ってもらいたい？", a: "yes" },
-      { q: "チーズ牛丼を頼んだ人を一瞬だけ見てしまったことはありますか？", a: "yes" },
-      { q: "知らない人を見て「チー牛かも」と思ってしまったことはありますか？", a: "yes" },
-      { q: "麻雀には、チーをされた瞬間にギュウと答えるとチーを取り消す『チーギュウ返し』という技がある。本当だと思いますか？", a: "yes" },
-      { q: "あなたは三度の飯よりチー牛が好きって本当ですか？", a: "yes" },
-      { q: "山本由伸選手の「負けると言う選択肢はない」という名言はとてもカッコ良かったですね？", a: "yes" },
-      { q: "山本由伸選手に「チーズ牛丼を食べないという選択肢はない」と言ってもらいたいですか？", a: "yes" },
-      { q: "ギリシャの哲学者アリストテレスの「すべての者は生まれながらに知恵を求める。」有名な名言は知っていますか？", a: "yes" },
-      { q: "チー牛界隈にも「すべての者は生まれながらにチーズ牛丼を求める。」という名言があるのを知っていますか？", a: "yes" },
-      ...Array.from({length: 45 - 12}, (_,i)=>({
-        q: `（仮）問題 ${i+13}：あなたは「ギュウ」と言ってもらえると嬉しい？`,
-        a: "yes"
-      }))
-    ];
-    QUESTIONS[44] = { q: "【最終】ここは「ギュウ」以外は即ゲームオーバーです。どうする？", a: "gyu", finalMustGyu: true };
+<script>
+/********************
+ * 画像命名規則（あなたの assets と一致）
+ ********************/
+const LS = {
+  girl: "chi_gyu_selected_girl",
+  bestStage: "chi_gyu_best_stage",
+  reachedStage: "chi_gyu_reached_stage",
+  counts: "chi_gyu_choice_counts"
+};
 
-    const FALLBACK_IMG = "assets/start_bg.png";
+const QUESTIONS = [
+  { q: "あなたはチー牛ですか？", a: "yes" },
+  { q: "チーと言えば？", a: "gyu" },
+  { q: "石原さとみさんに「チー」と言われたら？", a: "gyu" },
+  { q: "石原さとみさんに「ギュウ」と言ってもらいたい？", a: "yes" },
+  { q: "チーズ牛丼を頼んだ人を一瞬だけ見てしまったことはありますか？", a: "yes" },
+  { q: "知らない人を見て「チー牛かも」と思ってしまったことはありますか？", a: "yes" },
+  { q: "麻雀には、チーをされた瞬間にギュウと答えるとチーを取り消す『チーギュウ返し』という技がある。本当だと思いますか？", a: "yes" },
+  { q: "あなたは三度の飯よりチー牛が好きって本当ですか？", a: "yes" },
 
-    function normalImgPath(girl, n){
-      return `assets/girl${girl}_normal_${String(n).padStart(2,"0")}.png`;
-    }
-    function topImgPath(girl){
-      return `assets/girl${girl}_top_01.png`;
-    }
-    function gameoverImgPath(girl){
-      return `assets/girl${girl}_gameover_01.png`;
-    }
-    function chiGameoverImgPath(girl){
-      return `assets/girl${girl}_chi_gameover_01.png`;
-    }
-    function clearImgPath(girl, n){
-      return `assets/girl${girl}_clear_${String(n).padStart(2,"0")}.png`;
-    }
-    function scoreImgPath(girl, rank, n){
-      return `assets/girl${girl}_score_${rank}_${String(n).padStart(2,"0")}.png`;
-    }
+  { q: "山本由伸選手の「負けると言う選択肢はない」という名言はとてもカッコ良かったですね？", a: "yes" },
+  { q: "山本由伸選手に「チーズ牛丼を食べないという選択肢はない」と言ってもらいたいですか？", a: "yes" },
 
-    const EXCEPTIONS = [
-      { key: "all_yes", percent: 48 },
-      { key: "all_no", percent: 42 },
-      { key: "all_chi", percent: 57 },
-      { key: "all_gyu", percent: 53 },
-      { key: "43_plus_1", percent: 44 },
-      { key: "11_each", percent: 51 }
-    ];
+  { q: "ギリシャの哲学者アリストテレスの「すべての者は生まれながらに知恵を求める。」有名な名言は知っていますか？", a: "yes" },
+  { q: "チー牛界隈にも「すべての者は生まれながらにチーズ牛丼を求める。」という名言があるのを知っていますか？", a: "yes" },
 
-    function diffToPercent(diff){
-      const t = Math.min(44, Math.max(0, diff));
-      const base = 68 - (t * 1.1);
-      const eased = Math.max(18, Math.min(72, base));
-      return Math.round(eased);
-    }
-    function percentToRank(p){
-      if (p >= 65) return "s";
-      if (p >= 58) return "a";
-      if (p >= 50) return "b";
-      if (p >= 42) return "c";
-      return "d";
-    }
-    function isChigyuted(p){ return p >= 100; }
+  ...Array.from({length: 45 - 12}, (_,i)=>({
+    q: `（仮）問題 ${i+13}：あなたは「ギュウ」と言ってもらえると嬉しい？`,
+    a: "yes"
+  }))
+];
 
-    function detectException(counts){
-      const total = counts.yes + counts.no + counts.chi + counts.gyu;
-      if (total !== 44) return null;
+// 45問目だけ即死（あなたの最新仕様）
+QUESTIONS[44] = {
+  q: "【最終】ここは「ギュウ」以外は即ゲームオーバーです。どうする？",
+  a: "gyu",
+  finalMustGyu: true
+};
 
-      const arr = [counts.yes, counts.no, counts.chi, counts.gyu];
-      const max = Math.max(...arr);
-      const min = Math.min(...arr);
+function normalImgPath(girl, n){
+  return `assets/girl${girl}_normal_${String(n).padStart(2,"0")}.png`;
+}
+function topImgPath(girl){
+  return `assets/girl${girl}_top_01.png`;
+}
+function gameoverImgPath(girl){
+  return `assets/girl${girl}_gameover_01.png`;
+}
+function chiGameoverImgPath(girl){
+  return `assets/girl${girl}_chi_gameover_01.png`;
+}
+function clearImgPath(girl, n){
+  return `assets/girl${girl}_clear_${String(n).padStart(2,"0")}.png`;
+}
+function scoreImgPath(girl, rank, n){
+  return `assets/girl${girl}_score_${rank}_${String(n).padStart(2,"0")}.png`;
+}
 
-      if (counts.yes === 44) return "all_yes";
-      if (counts.no === 44) return "all_no";
-      if (counts.chi === 44) return "all_chi";
-      if (counts.gyu === 44) return "all_gyu";
-      if (counts.yes===11 && counts.no===11 && counts.chi===11 && counts.gyu===11) return "11_each";
-      if (max === 43 && min === 0) return "43_plus_1";
-      return null;
-    }
+/********************
+ * 採点（確定仕様）
+ ********************/
+const EXCEPTIONS = [
+  { key: "all_yes", percent: 48 },
+  { key: "all_no", percent: 42 },
+  { key: "all_chi", percent: 57 },
+  { key: "all_gyu", percent: 53 },
+  { key: "43_plus_1", percent: 44 },
+  { key: "11_each", percent: 51 }
+];
 
-    let state = {
-      girl: null,
-      stage: 1,
-      gameOver: false,
-      cleared: false,
-      mode: "NORMAL",
-      counts: { yes:0, no:0, chi:0, gyu:0 },
-      lastWrongChoice: null
-    };
+function diffToPercent(diff){
+  const t = Math.min(44, Math.max(0, diff));
+  const base = 68 - (t * 1.1);
+  const eased = Math.max(18, Math.min(72, base));
+  return Math.round(eased);
+}
+function percentToRank(p){
+  if (p >= 65) return "s";
+  if (p >= 58) return "a";
+  if (p >= 50) return "b";
+  if (p >= 42) return "c";
+  return "d";
+}
+function isChigyuted(p){ return p >= 100; }
 
-    const el = {
-      mainImg: document.getElementById("mainImg"),
-      bubble: document.getElementById("bubbleText"),
-      stageLabel: document.getElementById("stageLabel"),
-      modeLabel: document.getElementById("modeLabel"),
-      bestStage: document.getElementById("bestStage"),
-      reachedStage: document.getElementById("reachedStage"),
-      choices: document.getElementById("choices"),
-      btnRetry: document.getElementById("btnRetry"),
-      btnBackTop: document.getElementById("btnBackTop"),
-      girlModal: document.getElementById("girlModal")
-    };
+/********************
+ * 状態
+ ********************/
+let state = {
+  girl: null,
+  stage: 1,
+  gameOver: false,
+  cleared: false,
+  mode: "NORMAL",
+  counts: { yes:0, no:0, chi:0, gyu:0 }, // 44問集計
+  lastWrongChoice: null
+};
 
-    function setImgSafe(src){
-      const img = el.mainImg;
-      img.onerror = null;
-      img.src = src;
-      img.onerror = () => {
-        img.onerror = null;
-        img.src = FALLBACK_IMG;
-      };
-    }
+const el = {
+  mainImg: document.getElementById("mainImg"),
+  stagePill: document.getElementById("stagePill"),
+  modePill: document.getElementById("modePill"),
+  progressText: document.getElementById("progressText"),
+  questionBar: document.getElementById("questionBar"),
+  questionSmall: document.getElementById("questionSmall"),
+  choices: document.getElementById("choices"),
+  btnRetry: document.getElementById("btnRetry"),
+  btnBackTop: document.getElementById("btnBackTop"),
+  bestStage: document.getElementById("bestStage"),
+  reachedStage: document.getElementById("reachedStage"),
+  girlModal: document.getElementById("girlModal"),
+  gyuOverlay: document.getElementById("gyuOverlay")
+};
 
-    function enableChoices(on){
-      [...el.choices.querySelectorAll("button.choice")].forEach(b=>b.disabled = !on);
-    }
+function enableChoices(on){
+  [...el.choices.querySelectorAll("button")].forEach(b=>b.disabled = !on);
+}
 
-    function loadSaved(){
-      const g = localStorage.getItem(LS.girl);
-      if (g) state.girl = g;
+function randomNormalIndex(){
+  return 1 + Math.floor(Math.random()*15);
+}
 
-      const best = parseInt(localStorage.getItem(LS.bestStage) || "0", 10);
-      const reached = parseInt(localStorage.getItem(LS.reachedStage) || "0", 10);
-      el.bestStage.textContent = best ? `STAGE ${best}` : "—";
-      el.reachedStage.textContent = reached ? `STAGE ${reached}` : "—";
+function loadSaved(){
+  const g = localStorage.getItem(LS.girl);
+  if (g) state.girl = g;
 
-      try{
-        const c = JSON.parse(localStorage.getItem(LS.counts) || "null");
-        if (c && typeof c === "object") state.counts = { ...state.counts, ...c };
-      }catch(e){}
-    }
+  const best = parseInt(localStorage.getItem(LS.bestStage) || "0", 10);
+  const reached = parseInt(localStorage.getItem(LS.reachedStage) || "0", 10);
 
-    function saveBestAndReached(){
-      const best = parseInt(localStorage.getItem(LS.bestStage) || "0", 10);
-      const reached = Math.max(parseInt(localStorage.getItem(LS.reachedStage) || "0", 10), state.stage);
-      localStorage.setItem(LS.reachedStage, String(reached));
-      if (state.stage > best) localStorage.setItem(LS.bestStage, String(state.stage));
+  el.bestStage.textContent = best ? `STAGE ${best}` : "—";
+  el.reachedStage.textContent = reached ? `STAGE ${reached}` : "—";
 
-      el.bestStage.textContent = `STAGE ${parseInt(localStorage.getItem(LS.bestStage),10)}`;
-      el.reachedStage.textContent = `STAGE ${parseInt(localStorage.getItem(LS.reachedStage),10)}`;
-    }
+  try{
+    const c = JSON.parse(localStorage.getItem(LS.counts) || "null");
+    if (c && typeof c === "object") state.counts = { ...state.counts, ...c };
+  }catch(e){}
+}
 
-    function randomNormalIndex(){ return 1 + Math.floor(Math.random()*15); }
+function saveBestAndReached(){
+  const best = parseInt(localStorage.getItem(LS.bestStage) || "0", 10);
+  const reached = Math.max(parseInt(localStorage.getItem(LS.reachedStage) || "0", 10), state.stage);
 
-    function showGirlSelect(force=false){
-      if (!state.girl || force){
-        el.girlModal.classList.remove("hidden");
-        enableChoices(false);
-      }
-    }
-    function hideGirlSelect(){ el.girlModal.classList.add("hidden"); }
+  localStorage.setItem(LS.reachedStage, String(reached));
+  if (state.stage > best) localStorage.setItem(LS.bestStage, String(state.stage));
 
-    function setGirl(g){
-      state.girl = g;
-      localStorage.setItem(LS.girl, g);
-      hideGirlSelect();
-      goTop();
-    }
+  el.bestStage.textContent = `STAGE ${parseInt(localStorage.getItem(LS.bestStage),10)}`;
+  el.reachedStage.textContent = `STAGE ${parseInt(localStorage.getItem(LS.reachedStage),10)}`;
+}
 
-    function goTop(){
-      state.stage = 1;
-      state.gameOver = false;
-      state.cleared = false;
-      state.mode = "NORMAL";
-      state.counts = { yes:0, no:0, chi:0, gyu:0 };
-      localStorage.setItem(LS.counts, JSON.stringify(state.counts));
+function showGirlSelect(force=false){
+  if (!state.girl || force) el.girlModal.classList.remove("hidden");
+}
+function hideGirlSelect(){
+  el.girlModal.classList.add("hidden");
+}
+function setGirl(g){
+  state.girl = g;
+  localStorage.setItem(LS.girl, g);
+  hideGirlSelect();
+  goTop();
+}
+
+function goTop(){
+  state.stage = 1;
+  state.gameOver = false;
+  state.cleared = false;
+  state.mode = "NORMAL";
+  state.counts = { yes:0, no:0, chi:0, gyu:0 };
+  localStorage.setItem(LS.counts, JSON.stringify(state.counts));
+  el.btnRetry.classList.add("hidden");
+  enableChoices(true);
+  render();
+}
+
+/* ここ重要：正解したら「次の問題」に進むので、
+   毎回「あなたはチー牛ですか？」に戻るバグを防ぐ（stageを増やすだけ） */
+function render(){
+  el.modePill.textContent = `MODE ${state.mode}`;
+  el.stagePill.textContent = `STAGE ${state.stage}`;
+  el.progressText.textContent = `${state.stage}/45`;
+
+  const qObj = QUESTIONS[state.stage - 1];
+
+  // 問題文（SCORE中は別表示）
+  if (state.mode === "SCORE"){
+    // score表示は showScore() 側でやる
+  }else{
+    el.questionBar.textContent = qObj.q;
+    el.questionSmall.textContent = "";
+  }
+
+  // 画像
+  if (!state.girl){
+    el.mainImg.src = "assets/placeholder.png";
+    return;
+  }
+
+  if (state.gameOver){
+    const isChi = (state.lastWrongChoice === "chi");
+    el.mainImg.src = isChi ? chiGameoverImgPath(state.girl) : gameoverImgPath(state.girl);
+
+    el.btnRetry.classList.add("hidden");
+    setTimeout(()=> el.btnRetry.classList.remove("hidden"), 1000);
+    return;
+  }
+
+  if (state.cleared){
+    el.mainImg.src = clearImgPath(state.girl, 1 + Math.floor(Math.random()*3));
+    el.btnRetry.classList.add("hidden");
+    return;
+  }
+
+  // 通常：normalをランダム表示
+  el.mainImg.src = normalImgPath(state.girl, randomNormalIndex());
+  el.btnRetry.classList.add("hidden");
+}
+
+function flashGyu(){
+  el.gyuOverlay.classList.add("show");
+  setTimeout(()=> el.gyuOverlay.classList.remove("show"), 420);
+}
+
+function onAnswer(choice){
+  if (state.gameOver || state.cleared) return;
+  const idx = state.stage - 1;
+  const qObj = QUESTIONS[idx];
+
+  // 45問目だけ「ギュウ以外即死」
+  if (qObj.finalMustGyu && choice !== "gyu"){
+    state.gameOver = true;
+    state.lastWrongChoice = choice;
+    enableChoices(false);
+    saveBestAndReached();
+    render();
+    return;
+  }
+
+  const correct = (choice === qObj.a);
+
+  if (!correct){
+    state.gameOver = true;
+    state.lastWrongChoice = choice;
+    enableChoices(false);
+    saveBestAndReached();
+    render();
+    return;
+  }
+
+  // 正解演出は常に「ギュウ❤️」
+  flashGyu();
+
+  // 44問分集計（45問目は集計しない）
+  if (state.stage <= 44){
+    state.counts[choice] = (state.counts[choice] || 0) + 1;
+    localStorage.setItem(LS.counts, JSON.stringify(state.counts));
+  }
+
+  // 次へ
+  if (state.stage === 45){
+    state.cleared = true;
+    enableChoices(false);
+    saveBestAndReached();
+    showScore();
+    return;
+  }
+
+  state.stage += 1;
+  saveBestAndReached();
+  render();
+}
+
+function detectException(counts){
+  const total = counts.yes + counts.no + counts.chi + counts.gyu;
+  if (total !== 44) return null;
+
+  const arr = [counts.yes, counts.no, counts.chi, counts.gyu];
+  const max = Math.max(...arr);
+  const min = Math.min(...arr);
+
+  if (counts.yes === 44) return "all_yes";
+  if (counts.no === 44) return "all_no";
+  if (counts.chi === 44) return "all_chi";
+  if (counts.gyu === 44) return "all_gyu";
+  if (counts.yes===11 && counts.no===11 && counts.chi===11 && counts.gyu===11) return "11_each";
+  if (max === 43 && min === 0) return "43_plus_1";
+  return null;
+}
+
+function showScore(){
+  state.mode = "SCORE";
+  el.modePill.textContent = `MODE SCORE`;
+
+  const arr = [state.counts.yes, state.counts.no, state.counts.chi, state.counts.gyu];
+  const diff = Math.max(...arr) - Math.min(...arr);
+
+  let percent = diffToPercent(diff);
+
+  const exKey = detectException(state.counts);
+  if (exKey){
+    const ex = EXCEPTIONS.find(x=>x.key===exKey);
+    if (ex) percent = ex.percent;
+  }
+
+  // 2%枠：100%（チギュテッド）
+  if (!exKey){
+    if (Math.random() < 0.02) percent = 100;
+  }
+
+  const rank = percentToRank(percent);
+  el.mainImg.src = scoreImgPath(state.girl, rank, 1 + Math.floor(Math.random()*3));
+
+  // スコア帯（昔の雰囲気：シンプル）
+  el.questionBar.innerHTML = `<span class="scoreBig">チー牛度 0%</span><div class="scoreSub">計算中…</div>`;
+  el.questionSmall.textContent = "";
+
+  let cur = 0;
+  const target = percent;
+  const step = Math.max(1, Math.floor(target / 24));
+
+  const timer = setInterval(()=>{
+    cur += step;
+    if (cur >= target){
+      cur = target;
+      clearInterval(timer);
+
+      setTimeout(()=>{
+        const chig = isChigyuted(target);
+        const rankLabel = chig ? "チー牛ギフテッド（チギュテッド）" : `RANK ${rank.toUpperCase()}`;
+        const tone = chig ? "（上位2%）" : "";
+        el.questionBar.innerHTML =
+          `<span class="scoreBig">チー牛度 ${target}%</span>` +
+          `<div class="scoreSub">${rankLabel} ${tone}</div>`;
+      }, 450);
+
       el.btnRetry.classList.add("hidden");
-
-      el.modeLabel.textContent = state.mode;
-      el.stageLabel.textContent = String(state.stage);
-
-      if (!state.girl){
-        el.bubble.textContent = "女の子を選んでね";
-        setImgSafe(FALLBACK_IMG);
-        showGirlSelect(true);
-        return;
-      }
-
-      enableChoices(true);
-      renderStage(true);
-    }
-
-    function renderStage(preferTop=false){
-      if (!state.girl){
-        el.bubble.textContent = "女の子を選んでね";
-        setImgSafe(FALLBACK_IMG);
-        showGirlSelect(true);
-        return;
-      }
-
-      el.modeLabel.textContent = state.mode;
-      el.stageLabel.textContent = String(state.stage);
-
-      const qObj = QUESTIONS[state.stage - 1];
-      el.bubble.textContent = qObj.q;
-
-      if (state.gameOver){
-        const isChi = (state.lastWrongChoice === "chi");
-        setImgSafe(isChi ? chiGameoverImgPath(state.girl) : gameoverImgPath(state.girl));
-      } else if (state.cleared){
-        setImgSafe(clearImgPath(state.girl, 1 + Math.floor(Math.random()*3)));
-      } else {
-        if (preferTop && state.stage === 1){
-          setImgSafe(topImgPath(state.girl));
-        } else {
-          setImgSafe(normalImgPath(state.girl, randomNormalIndex()));
-        }
-      }
-
-      if (state.gameOver){
-        el.btnRetry.classList.add("hidden");
-        setTimeout(()=> el.btnRetry.classList.remove("hidden"), 1000);
-      } else {
-        el.btnRetry.classList.add("hidden");
-      }
-    }
-
-    /********************
-     * ここが変更点：
-     * ・STAGE1〜44は間違えてもゲームオーバーにしない
-     * ・即死はSTAGE45だけ
-     ********************/
-    function onAnswer(choice){
-      if (!state.girl){
-        showGirlSelect(true);
-        return;
-      }
-      if (state.gameOver || state.cleared) return;
-
-      const qObj = QUESTIONS[state.stage - 1];
-
-      // ★ 即死はSTAGE45だけ（finalMustGyu の時だけ）
-      if (qObj.finalMustGyu && choice !== "gyu"){
-        state.gameOver = true;
-        state.lastWrongChoice = choice;
-        enableChoices(false);
-        renderStage();
-        saveBestAndReached();
-        return;
-      }
-
-      // ★ STAGE1〜44は「正誤に関係なく進行」
-      // ただし採点用カウントは “実際に押したもの” をそのまま数える（あなたの44問集計仕様）
-      if (state.stage <= 44){
-        state.counts[choice] = (state.counts[choice] || 0) + 1;
-        localStorage.setItem(LS.counts, JSON.stringify(state.counts));
-      }
-
-      // 正解演出：常に「ギュウ」固定
-      const prevText = el.bubble.textContent;
-      el.bubble.textContent = "ギュウ";
-      setTimeout(()=> { el.bubble.textContent = prevText; }, 450);
-
-      // 次へ or クリア
-      if (state.stage === 45){
-        state.cleared = true;
-        enableChoices(false);
-        saveBestAndReached();
-        showScore();
-        return;
-      }
-
-      state.stage += 1;
-      saveBestAndReached();
-      renderStage(false);
-    }
-
-    function showScore(){
-      state.mode = "SCORE";
-      el.modeLabel.textContent = state.mode;
-
-      const arr = [state.counts.yes, state.counts.no, state.counts.chi, state.counts.gyu];
-      const diff = Math.max(...arr) - Math.min(...arr);
-
-      let percent = diffToPercent(diff);
-
-      const exKey = detectException(state.counts);
-      if (exKey){
-        const ex = EXCEPTIONS.find(x=>x.key===exKey);
-        if (ex) percent = ex.percent;
-      }
-
-      if (!exKey && Math.random() < 0.02) percent = 100;
-
-      const rank = percentToRank(percent);
-      setImgSafe(scoreImgPath(state.girl, rank, 1 + Math.floor(Math.random()*3)));
-
-      const bubble = el.bubble;
-      bubble.innerHTML = `チー牛度 <b style="font-size:18px;letter-spacing:.04em">0%</b><small>計算中…</small>`;
-
-      let cur = 0;
-      const target = percent;
-      const step = Math.max(1, Math.floor(target / 24));
-
-      const timer = setInterval(()=>{
-        cur += step;
-        if (cur >= target){
-          cur = target;
-          clearInterval(timer);
-
-          setTimeout(()=>{
-            const chig = isChigyuted(target);
-            const rankLabel = chig ? "チー牛ギフテッド（チギュテッド）" : `RANK ${rank.toUpperCase()}`;
-            const tone = chig ? "（上位2%）" : "";
-            bubble.innerHTML =
-              `チー牛度 <b style="font-size:20px;letter-spacing:.04em">${target}%</b><br>` +
-              `<small style="margin-top:8px;display:block">${rankLabel} ${tone}</small>`;
-          }, 500);
-
-          el.btnRetry.classList.add("hidden");
-          enableChoices(false);
-        } else {
-          bubble.innerHTML = `チー牛度 <b style="font-size:18px;letter-spacing:.04em">${cur}%</b><small>計算中…</small>`;
-        }
-      }, 30);
-    }
-
-    document.querySelectorAll("button.choice").forEach(btn=>{
-      btn.addEventListener("click", ()=> onAnswer(btn.dataset.choice));
-    });
-
-    el.btnBackTop.addEventListener("click", ()=>{
-      showGirlSelect(true);
-    });
-
-    el.btnRetry.addEventListener("click", ()=>{
-      goTop();
-    });
-
-    document.querySelectorAll(".girlCard").forEach(card=>{
-      card.addEventListener("click", ()=>{
-        setGirl(card.dataset.girl);
-      });
-    });
-
-    loadSaved();
-    if (state.girl){
-      goTop();
-    } else {
       enableChoices(false);
-      setImgSafe(FALLBACK_IMG);
-      el.bubble.textContent = "女の子を選んでね";
-      showGirlSelect(true);
+      state.cleared = true; // クリア扱い
+      render();
+    }else{
+      el.questionBar.innerHTML = `<span class="scoreBig">チー牛度 ${cur}%</span><div class="scoreSub">計算中…</div>`;
     }
-  </script>
+  }, 30);
+}
+
+/********************
+ * イベント
+ ********************/
+document.querySelectorAll("button.choice").forEach(btn=>{
+  btn.addEventListener("click", ()=> onAnswer(btn.dataset.choice));
+});
+
+el.btnBackTop.addEventListener("click", ()=>{
+  showGirlSelect(true);
+});
+
+el.btnRetry.addEventListener("click", ()=>{
+  goTop();
+});
+
+document.querySelectorAll(".girlCard").forEach(card=>{
+  card.addEventListener("click", ()=>{
+    setGirl(card.dataset.girl);
+    enableChoices(true);
+  });
+});
+
+/********************
+ * 起動
+ ********************/
+loadSaved();
+showGirlSelect(false);
+
+if (state.girl){
+  enableChoices(true);
+  render();
+}else{
+  el.mainImg.src = "assets/placeholder.png";
+  el.questionBar.textContent = "女の子を選んでね";
+  el.questionSmall.textContent = "";
+  enableChoices(false);
+}
+</script>
+
+<!--
+assets/（今のあなたの構成に合わせて）
+  girlA_icon.png / girlB_icon.png / girlC_icon.png
+  placeholder.png
+  girlA_top_01.png
+  girlA_normal_01.png ... _15.png
+  girlA_gameover_01.png
+  girlA_chi_gameover_01.png
+  girlA_clear_01.png ... _03.png
+  girlA_score_s/a/b/c/d_01.png ... _03.png
+  （B/Cも同様）
+-->
 </body>
 </html>
