@@ -107,13 +107,26 @@ header{
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
   gap:12px;
+  margin:14px auto 0;
+  width:min(520px, 100%);
 }
 .girlTile{
   position:relative;
   border-radius:16px;
   overflow:hidden;
   background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,255,255,.00);
   padding:10px;
+  text-align:left;
+  -webkit-tap-highlight-color:transparent;
+}
+.girlTile.active{
+  border-color:var(--stroke);
+  background:rgba(255,255,255,.12);
+}
+.girlTile.locked{
+  opacity:.90;
+  border-color:rgba(255,255,255,.10);
 }
 .iconBox{
   width:100%;
@@ -121,20 +134,78 @@ header{
   border-radius:var(--iconRadius);
   overflow:hidden;
   background:rgba(0,0,0,.25);
+  position:relative;
+}
+.iconBox::before{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:var(--iconRadius);
+  box-shadow: inset 0 0 0 var(--iconFrame) rgba(255,255,255,.92);
+  pointer-events:none;
 }
 .iconBox img{
   width:100%;
   height:100%;
   object-fit:cover;
+  display:block;
 }
 .girlName{
   margin-top:10px;
   font-weight:900;
+  letter-spacing:.10em;
   font-size:13px;
+  opacity:.95;
 }
+.lockBadge{
+  position:absolute;
+  top:10px; right:10px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.25);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.rowBtns{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:nowrap;
+  margin-top:14px;
+}
+.rowBtns .bigBtn{ width:auto; flex:1; max-width:220px; }
 
 /* MODE */
 #modeScreen .overlay{ padding-top:220px }
+.modeBtns{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  width:min(360px, 92%);
+  margin:0 auto;
+}
+.modeBtn{
+  font-size:18px;
+  padding:16px 18px;
+  border:none;
+  border-radius:16px;
+  background:#ffffff22;
+  color:#fff;
+  font-weight:900;
+}
+.smallBack{
+  margin-top:14px;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.12em;
+  opacity:.9;
+  text-decoration:underline;
+  background:transparent;
+  border:none;
+  color:#fff;
+}
 
 /* GAME */
 #gameScreen .overlay{
@@ -142,10 +213,12 @@ header{
   justify-content:space-between;
 }
 .bubble{
+  position:relative;
   background:rgba(255,255,255,.08);
   border-radius:14px;
   padding:14px;
   min-height:130px;
+  overflow:visible;
 }
 .question{
   font-size:20px;
@@ -157,9 +230,39 @@ header{
   position:absolute;
   right:14px;
   bottom:10px;
-  font-size:28px;
+  text-align:right;
+  pointer-events:none;
+  font-size:clamp(22px, 6vw, 34px);
   font-weight:900;
+  letter-spacing:.10em;
+  line-height:1.1;
+  max-width:88%;
+  white-space:pre-line;
+  word-break:break-word;
+  overflow:visible;
+  text-shadow:0 10px 28px rgba(0,0,0,.75);
 }
+
+/* gauge */
+.gauge{
+  height:8px;
+  background:#222;
+  border-radius:999px;
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(8px);
+  transition:opacity .16s, transform .16s;
+  margin-bottom:10px;
+}
+.gauge.show{ opacity:1; transform:translateY(0); }
+.gauge>div{
+  height:100%;
+  width:100%;
+  transform-origin:left;
+  transform:scaleX(0);
+}
+#gaugeBar.yellow{ background:linear-gradient(90deg,#ffe259,#ffa751); }
+#gaugeBar.red{ background:linear-gradient(90deg,#ff416c,#ff4b2b); }
 
 /* choices */
 .choices{
@@ -175,6 +278,7 @@ header{
   font-weight:900;
   color:#fff;
 }
+.choice:disabled{opacity:.55}
 
 /* result */
 #resultBox{
@@ -182,6 +286,29 @@ header{
   left:16px;
   right:16px;
   bottom:180px;
+  pointer-events:none;
+  text-shadow:0 10px 28px rgba(0,0,0,.75);
+}
+#resultBox .label{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:.10em;
+  margin-bottom:12px;
+}
+#resultBox .pctRow{
+  display:flex;
+  justify-content:flex-end;
+  align-items:baseline;
+}
+#resultBox .pct{
+  font-size:52px;
+  font-weight:900;
+  line-height:1;
+}
+#resultBox .pct small{
+  font-size:20px;
+  opacity:.95;
+  margin-left:2px;
 }
 </style>
 </head>
@@ -194,38 +321,57 @@ header{
   <div id="counter">-</div>
 </header>
 
+<!-- TOP -->
 <div id="topScreen" class="screen">
   <div class="bg"></div>
   <div class="overlay">
     <div class="panel">
       <h1 class="titleBig">ガチ！チー牛診断！！</h1>
-      <button class="bigBtn">START</button>
+      <button class="bigBtn" id="btnGoGirl">START</button>
     </div>
   </div>
-  <div id="versionTag">VERSION v0.30.6</div>
+  <div id="versionTag">VERSION <span id="versionVal"></span></div>
 </div>
 
+<!-- GIRL SELECT -->
 <div id="girlScreen" class="screen hide">
   <div class="bg"></div>
   <div class="overlay">
     <div class="panel">
       <h1 class="titleBig">女の子を選んでね</h1>
-      <div class="gridIcons"></div>
+      <div class="gridIcons" id="girlGrid"></div>
+      <div class="rowBtns">
+        <button class="bigBtn" id="btnGirlBack">戻る</button>
+        <button class="bigBtn" id="btnGoMode">次へ</button>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- MODE SELECT -->
 <div id="modeScreen" class="screen hide">
   <div class="bg"></div>
   <div class="overlay">
     <div class="panel">
       <h1 class="titleBig">モードを選んでね</h1>
+      <div class="subLine" id="bestLine">チー娘 BEST：ステージ0</div>
+      <div class="modeBtns">
+        <button class="modeBtn" id="btnStartQuiz">チー牛診断</button>
+        <button class="modeBtn" id="btnStartChee">チー娘モード</button>
+      </div>
+      <button class="smallBack" id="btnModeBack">女の子選択に戻る</button>
     </div>
   </div>
 </div>
 
+<!-- GAME -->
 <div id="gameScreen" class="screen hide">
   <div class="bg"></div>
+
+  <div id="resultBox" class="hide">
+    <div class="label">あなたのチー牛度は</div>
+    <div class="pctRow"><div class="pct" id="resultPct">0<small>%</small></div></div>
+  </div>
 
   <div class="overlay">
     <div class="bubble">
@@ -237,8 +383,10 @@ header{
     <div class="choices" id="choices"></div>
   </div>
 </div>
-  
+
 </div>
+
+<!-- JS（キャッシュ対策は ?v=307 など増やしてOK） -->
 <script src="app.js?v=306"></script>
 </body>
 </html>
