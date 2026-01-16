@@ -1,663 +1,669 @@
-/* ============================
-   チーと言えばギュウと答える
-   app.js v0.30.6 (fix pack 309)
-   ============================ */
+/* ==============================
+  チーと言えばギュウと答える
+  app.js v0.30.6 (fix: chi battle 10 choices + smooth + shake)
+================================ */
 
 (() => {
   "use strict";
 
+  /* ========= VERSION ========= */
   const APP_VERSION = "v0.30.6";
-  const versionEl = document.getElementById("versionVal");
-  if (versionEl) versionEl.textContent = APP_VERSION;
+  const versionValEl = document.getElementById("versionVal");
+  if (versionValEl) versionValEl.textContent = APP_VERSION;
 
-  const params = new URLSearchParams(location.search);
-  const DEBUG = params.get("debug") === "1";
-
+  /* ========= STORAGE KEYS ========= */
   const CHEE_RECORD_KEY = "cheeGirlBestStage";
   const GIRL_KEY = "selectedGirlKey";
-  const STAR_KEY = "chiGiftedViewed";
 
   const getBestStage = () => Number(localStorage.getItem(CHEE_RECORD_KEY) || "0");
-  const setBestStage = (v) => localStorage.setItem(CHEE_RECORD_KEY, String(v));
+  const setBestStage = (stage) => localStorage.setItem(CHEE_RECORD_KEY, String(stage));
   const getSavedGirl = () => localStorage.getItem(GIRL_KEY) || "A";
   const saveGirl = (g) => localStorage.setItem(GIRL_KEY, g);
 
-  const getStarMap = () => {
-    try { return JSON.parse(localStorage.getItem(STAR_KEY) || "{}"); }
-    catch { return {}; }
-  };
-  const setStar = (g) => {
-    const m = getStarMap();
-    m[g] = true;
-    localStorage.setItem(STAR_KEY, JSON.stringify(m));
-  };
+  /* ========= DOM ========= */
+  const el = {
+    counter: document.getElementById("counter"),
 
-  const counterEl = document.getElementById("counter");
-
-  const screens = {
     top: document.getElementById("topScreen"),
     girl: document.getElementById("girlScreen"),
     mode: document.getElementById("modeScreen"),
     game: document.getElementById("gameScreen"),
+
+    btnGoGirl: document.getElementById("btnGoGirl"),
+    btnGirlBack: document.getElementById("btnGirlBack"),
+    btnGoMode: document.getElementById("btnGoMode"),
+
+    btnStartQuiz: document.getElementById("btnStartQuiz"),
+    btnStartChee: document.getElementById("btnStartChee"),
+    btnModeBack: document.getElementById("btnModeBack"),
+
+    girlGrid: document.getElementById("girlGrid"),
+    bestLine: document.getElementById("bestLine"),
+
+    question: document.getElementById("question"),
+    speech: document.getElementById("speech"),
+    choices: document.getElementById("choices"),
+
+    gaugeWrap: document.getElementById("gaugeWrap"),
+    gaugeBar: document.getElementById("gaugeBar"),
+
+    resultBox: document.getElementById("resultBox"),
+    resultPct: document.getElementById("resultPct"),
   };
 
-  const btnGoGirl = document.getElementById("btnGoGirl");
-  const btnGirlBack = document.getElementById("btnGirlBack");
-  const btnGoMode = document.getElementById("btnGoMode");
-
-  const btnModeBack = document.getElementById("btnModeBack");
-  const btnStartQuiz = document.getElementById("btnStartQuiz");
-  const btnStartChee = document.getElementById("btnStartChee");
-
-  const bestLine = document.getElementById("bestLine");
-  const girlGrid = document.getElementById("girlGrid");
-
-  const qEl = document.getElementById("question");
-  const speechEl = document.getElementById("speech");
-  const choicesEl = document.getElementById("choices");
-
-  const gaugeWrap = document.getElementById("gaugeWrap");
-  const gaugeBar = document.getElementById("gaugeBar");
-
-  const resultBox = document.getElementById("resultBox");
-  const resultPct = document.getElementById("resultPct");
-
-  /* ===== inject CSS ===== */
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes screenShake {
-      0%{ transform:translate3d(0,0,0) }
-      15%{ transform:translate3d(-2px,1px,0) }
-      30%{ transform:translate3d(2px,-1px,0) }
-      45%{ transform:translate3d(-3px,0,0) }
-      60%{ transform:translate3d(3px,1px,0) }
-      75%{ transform:translate3d(-2px,-1px,0) }
-      100%{ transform:translate3d(0,0,0) }
-    }
-    .shakeNow{ animation:screenShake .35s linear 1; }
-    .chiBanner{
-      position:absolute; left:16px; right:16px; top:110px;
-      z-index:30;
-      padding:14px 14px;
-      border-radius:14px;
-      background:rgba(0,0,0,.40);
-      border:1px solid rgba(255,255,255,.20);
-      font-weight:900;
-      letter-spacing:.14em;
-      text-align:center;
-      text-shadow:0 10px 28px rgba(0,0,0,.75);
-      opacity:0;
-      transform:translateY(10px);
-      transition:opacity .18s ease, transform .18s ease;
-      pointer-events:none;
-    }
-    .chiBanner.show{ opacity:1; transform:translateY(0); }
-  `;
-  document.head.appendChild(style);
-
-  const chiBanner = document.createElement("div");
-  chiBanner.className = "chiBanner";
-  if (screens.game) screens.game.appendChild(chiBanner);
-
-  /* ===== BG refs ===== */
-  const bgEls = {
-    top: screens.top?.querySelector(".bg"),
-    girl: screens.girl?.querySelector(".bg"),
-    mode: screens.mode?.querySelector(".bg"),
-    game: screens.game?.querySelector(".bg"),
-  };
-
-  /* ===== image helper (重要：decode待ちで止まらない) ===== */
-  async function setBgFast(el, url) {
-    if (!el) return;
-    if (!url) { el.style.backgroundImage = ""; return; }
-
-    // まず即反映（これで止まらない）
-    el.style.backgroundImage = `url("${url}")`;
-
-    // decodeは「裏で」＋ タイムアウトで切る
-    try {
-      const img = new Image();
-      img.src = url;
-
-      const decodePromise = (img.decode ? img.decode() : Promise.resolve());
-      await Promise.race([
-        decodePromise,
-        new Promise((_, rej) => setTimeout(() => rej(new Error("decode timeout")), 250))
-      ]);
-      // decodeできたらもう一回当て直し（チラつき軽減）
-      el.style.backgroundImage = `url("${url}")`;
-    } catch {
-      // 失敗しても何もしない（既に即反映済み）
-    }
+  function bgOf(screenEl) {
+    return screenEl?.querySelector(".bg");
   }
 
-  /* ===== data ===== */
-  function makeGirl(prefix, key, name, locked) {
-    return {
-      key, name, locked,
-      icon: `${prefix}_icon.png`,
-      top: `${prefix}_top_01.png`,
-      normal: Array.from({ length: 15 }, (_, i) => `${prefix}_normal_${String(i + 1).padStart(2, "0")}.png`),
-      clear: Array.from({ length: 3 }, (_, i) => `${prefix}_clear_${String(i + 1).padStart(2, "0")}.png`),
-      gameover: `${prefix}_gameover_01.png`,
-      chiGameover: `${prefix}_chi_gameover_01.png`,
-      score: {
-        s: Array.from({ length: 3 }, (_, i) => `${prefix}_score_s_${String(i + 1).padStart(2, "0")}.png`),
-        a: Array.from({ length: 3 }, (_, i) => `${prefix}_score_a_${String(i + 1).padStart(2, "0")}.png`),
-        b: Array.from({ length: 3 }, (_, i) => `${prefix}_score_b_${String(i + 1).padStart(2, "0")}.png`),
-        c: Array.from({ length: 3 }, (_, i) => `${prefix}_score_c_${String(i + 1).padStart(2, "0")}.png`),
-        d: Array.from({ length: 3 }, (_, i) => `${prefix}_score_d_${String(i + 1).padStart(2, "0")}.png`),
+  /* ========= SHAKE CSS (inject) ========= */
+  const shakeStyleId = "chiShakeStyle";
+  if (!document.getElementById(shakeStyleId)) {
+    const st = document.createElement("style");
+    st.id = shakeStyleId;
+    st.textContent = `
+      @keyframes chiShake {
+        0%{transform:translate(0,0)}
+        10%{transform:translate(-2px,1px)}
+        20%{transform:translate(2px,-1px)}
+        30%{transform:translate(-3px,-1px)}
+        40%{transform:translate(3px,2px)}
+        50%{transform:translate(-2px,2px)}
+        60%{transform:translate(2px,0)}
+        70%{transform:translate(-1px,-2px)}
+        80%{transform:translate(1px,2px)}
+        90%{transform:translate(-2px,1px)}
+        100%{transform:translate(0,0)}
       }
-    };
+      .chi-shake {
+        animation: chiShake 320ms linear infinite;
+      }
+    `;
+    document.head.appendChild(st);
   }
 
-  const GIRLS = [
-    makeGirl("girlA", "A", "Girl A", false),
-    makeGirl("girlB", "B", "Girl B", false),
-    makeGirl("girlC", "C", "Girl C", false),
-    makeGirl("girlD", "D", "Girl D", true),
-    makeGirl("girlE", "E", "Girl E", true),
-    makeGirl("girlF", "F", "Girl F", true),
+  /* ========= GIRLS =========
+     D/E/F は icon と top だけ -> locked で扱う（選べるがLOCK表示＆開始不可）
+  */
+  const girls = [
+    { key: "A", name: "Girl A", locked: false, prefix: "girlA" },
+    { key: "B", name: "Girl B", locked: false, prefix: "girlB" },
+    { key: "C", name: "Girl C", locked: false, prefix: "girlC" },
+    { key: "D", name: "Girl D", locked: true,  prefix: "girlD" },
+    { key: "E", name: "Girl E", locked: true,  prefix: "girlE" },
+    { key: "F", name: "Girl F", locked: true,  prefix: "girlF" },
   ];
 
-  const getGirl = (key) => GIRLS.find(g => g.key === key) || GIRLS[0];
-  const isUnlocked = (g) => (DEBUG ? true : !g.locked);
+  const girlByKey = (k) => girls.find(g => g.key === k) || girls[0];
 
-  function showScreen(name) {
-    Object.entries(screens).forEach(([k, el]) => {
-      if (!el) return;
-      if (k === name) el.classList.remove("hide");
-      else el.classList.add("hide");
+  function fileExistsGuess(p) {
+    // GitHub Pages での存在確認は重いので “推測 + プリロード”でOKにする
+    return p;
+  }
+
+  function girlIcon(g) { return fileExistsGuess(`${g.prefix}_icon.png`); }
+  function girlTop(g)  { return fileExistsGuess(`${g.prefix}_top_01.png`); }
+  function girlNormal(g, n) { return fileExistsGuess(`${g.prefix}_normal_${String(n).padStart(2,"0")}.png`); }
+  function girlGO(g) { return fileExistsGuess(`${g.prefix}_gameover_01.png`); }
+  function girlChiGO(g) { return fileExistsGuess(`${g.prefix}_chi_gameover_01.png`); }
+  function girlClear(g, n) { return fileExistsGuess(`${g.prefix}_clear_${String(n).padStart(2,"0")}.png`); }
+
+  /* ========= IMAGE PRELOAD ========= */
+  const imgCache = new Map(); // url -> Promise<void>
+  function preload(url) {
+    if (!url) return Promise.resolve();
+    if (imgCache.has(url)) return imgCache.get(url);
+    const p = new Promise((resolve) => {
+      const im = new Image();
+      im.onload = () => resolve();
+      im.onerror = () => resolve(); // 失敗しても落とさない
+      im.src = url;
     });
+    imgCache.set(url, p);
+    return p;
   }
 
-  function updateCounter(text) {
-    if (counterEl) counterEl.textContent = text || "-";
+  async function setBgImage(screenEl, url) {
+    const bg = bgOf(screenEl);
+    if (!bg) return;
+    await preload(url);
+    bg.style.backgroundImage = `url("${url}")`;
   }
 
-  /* ===== gauge ===== */
-  let gaugeTimer = null;
-
-  function hideGauge() {
-    if (gaugeTimer) { clearInterval(gaugeTimer); gaugeTimer = null; }
-    gaugeWrap?.classList.remove("show");
-    if (gaugeBar) gaugeBar.style.transform = "scaleX(0)";
+  /* ========= SCREEN SWITCH ========= */
+  function showScreen(target) {
+    const list = [el.top, el.girl, el.mode, el.game];
+    list.forEach(s => s && s.classList.add("hide"));
+    target.classList.remove("hide");
   }
 
-  function runGauge(durationMs, color, onTimeout) {
-    hideGauge();
-    if (!gaugeWrap || !gaugeBar) return;
-
-    gaugeWrap.classList.add("show");
-    gaugeBar.className = "";
-    gaugeBar.classList.add(color);
-    gaugeBar.style.transform = "scaleX(1)";
-
-    const start = performance.now();
-    gaugeTimer = setInterval(() => {
-      const p = Math.max(0, 1 - (performance.now() - start) / durationMs);
-      gaugeBar.style.transform = `scaleX(${p})`;
-      if (p <= 0) {
-        hideGauge();
-        onTimeout?.();
-      }
-    }, 16);
+  function setCounter(text) {
+    if (el.counter) el.counter.textContent = text ?? "-";
   }
 
-  /* ===== banner ===== */
-  let bannerTimer = null;
-  function showChiBanner(text, ms = 900) {
-    if (!chiBanner) return Promise.resolve();
-    if (bannerTimer) clearTimeout(bannerTimer);
-    chiBanner.textContent = text;
-    requestAnimationFrame(() => chiBanner.classList.add("show"));
-    return new Promise((resolve) => {
-      bannerTimer = setTimeout(() => {
-        chiBanner.classList.remove("show");
-        resolve();
-      }, ms);
-    });
+  /* ========= BUTTON / CHOICES ========= */
+  function clearChoices() {
+    el.choices.innerHTML = "";
   }
 
-  /* ===== choices ===== */
-  function setChoices(labels, onPick, disabled = false) {
-    if (!choicesEl) return;
-    choicesEl.innerHTML = "";
+  function renderChoices(labels, onPick, { disabled=false } = {}) {
+    clearChoices();
     labels.forEach((t) => {
       const b = document.createElement("button");
       b.className = "choice";
       b.textContent = t;
-      b.style.background = "rgba(255,255,255,.22)";
-      b.disabled = disabled;
-      b.addEventListener("click", () => onPick(t), { passive: true });
-      choicesEl.appendChild(b);
-    });
-  }
-  function lockChoices(lock) {
-    choicesEl?.querySelectorAll("button.choice").forEach(btn => btn.disabled = lock);
-  }
-
-  function shakeOnce() {
-    const el = screens.game;
-    if (!el) return;
-    el.classList.remove("shakeNow");
-    requestAnimationFrame(() => {
-      el.classList.add("shakeNow");
-      setTimeout(() => el.classList.remove("shakeNow"), 420);
+      b.disabled = !!disabled;
+      // 見た目（適当でOK）
+      // 4択/10択どちらでも見やすいように
+      if (t === "ギュウ") b.style.background = "rgba(255,255,255,.22)";
+      else b.style.background = "rgba(255,255,255,.10)";
+      b.addEventListener("click", () => onPick(t));
+      el.choices.appendChild(b);
     });
   }
 
-  const Q1 = "あなたはチー牛ですか？";
-  const Q25 = "最後にひとこと。チーと言えば？";
-  const MID = [
-    "知らない人を見て「チー牛かも」と思ってしまったことはありますか？",
-    "チーズ牛丼を本当は食べたいのに、恥ずかしくて頼めないですか？",
-    "友人にチー牛はいますか？",
-    "大谷翔平選手に言ってほしい言葉1位は「チー牛食おうぜ！」だと思いますか？",
-    "麻雀でチーをされた瞬間に「ギュウ」と答えると取り消せる「チーギュウ返し」がある。本当だと思いますか？",
-    "あなたは三度の飯よりチー牛が好きって本当ですか？",
-    "チー牛の呼吸（全十ノ型）があると思いますか？",
-    "「チーと言えばギュウ」「ギュウと言えばチー」を口にしたことはありますか？",
-    "チー牛を見かけると一瞬だけ目で追ってしまいますか？",
-    "今日の気分は「チー」ですか？",
-    "今日の気分は「ギュウ」ですか？",
-    "「はい」と答えると楽になることが多いですか？",
-    "「いいえ」と答えると強くなった気がしますか？",
-    "チー牛診断を何回も回したいタイプですか？",
-    "今この瞬間、ギュウって言いたいですか？",
-    "一度でも「チー娘」に会いたいと思いましたか？",
-    "チー牛という言葉を検索したことがありますか？",
-    "突然のギュウに耐性がありますか？",
-    "選択肢の中で「ギュウ」が一番安心しますか？",
-    "最後はどうせギュウだと思ってますか？",
-    "ここまで来たらギュウと言うしかないですか？",
-    "チーと言われたら反射でギュウが出ますか？",
-    "あなたの中にチーがいますか？",
-  ];
-  const build25 = () => [Q1, ...MID.slice(0, 23), Q25];
-
-  const state = {
-    girlKey: getSavedGirl(),
-    mode: null, // quiz|chee
-    qIndex: 0,
-    questions: [],
-    counts: { "はい": 0, "いいえ": 0, "チー": 0, "ギュウ": 0 },
-
-    inBattle: false,
-    battleDone: 0,
-    battleLv: 0,
-    battlePlan: [],
-
-    cheeStage: 1,
-    cheeBest: getBestStage(),
-  };
-
-  function getTopBg() { return "top_keyvisual_01.png"; }
-
-  async function applyCommonBg() {
-    await setBgFast(bgEls.top, getTopBg());
-    await setBgFast(bgEls.girl, getTopBg());
-    await setBgFast(bgEls.mode, getGirl(state.girlKey).top);
+  function disableChoices() {
+    [...el.choices.querySelectorAll("button")].forEach(b => b.disabled = true);
   }
 
-  function renderGirlGrid() {
-    if (!girlGrid) return;
-    girlGrid.innerHTML = "";
-    const starMap = getStarMap();
+  /* ========= GAUGE / TIMER ========= */
+  let timerRAF = null;
+  let timerEndAt = 0;
+  let timerOnTimeout = null;
 
-    GIRLS.forEach(g => {
-      const tile = document.createElement("div");
-      tile.className = "girlTile";
-      if (g.key === state.girlKey) tile.classList.add("active");
-      if (!isUnlocked(g)) tile.classList.add("locked");
-
-      const icon = document.createElement("div");
-      icon.className = "iconBox";
-      const img = document.createElement("img");
-      img.src = g.icon;
-      img.alt = g.name;
-      icon.appendChild(img);
-
-      const nm = document.createElement("div");
-      nm.className = "girlName";
-      nm.textContent = `${g.name}${starMap[g.key] ? " ★" : ""}`;
-
-      tile.appendChild(icon);
-      tile.appendChild(nm);
-
-      if (!isUnlocked(g)) {
-        const lock = document.createElement("div");
-        lock.className = "lockBadge";
-        lock.textContent = "LOCK";
-        tile.appendChild(lock);
-      }
-
-      tile.addEventListener("click", () => {
-        if (!isUnlocked(g)) return;
-        state.girlKey = g.key;
-        saveGirl(g.key);
-        renderGirlGrid();
-      }, { passive: true });
-
-      girlGrid.appendChild(tile);
-    });
+  function stopTimer() {
+    if (timerRAF) cancelAnimationFrame(timerRAF);
+    timerRAF = null;
+    timerEndAt = 0;
+    timerOnTimeout = null;
+    el.gaugeWrap?.classList.remove("show");
+    if (el.gaugeBar) el.gaugeBar.style.transform = "scaleX(0)";
   }
 
-  function planInvasions() {
-    state.battlePlan = [7, 14, 21];
-    state.battleDone = 0;
-    state.battleLv = 0;
-  }
+  function startTimer(ms, { color="yellow", onTimeout } = {}) {
+    stopTimer();
+    if (!el.gaugeWrap || !el.gaugeBar) return;
 
-  async function showQuestion() {
-    state.inBattle = false;
-    hideGauge();
-    speechEl.textContent = "";
-    lockChoices(false);
+    timerOnTimeout = onTimeout;
+    timerEndAt = performance.now() + ms;
 
-    const g = getGirl(state.girlKey);
-    const qn = state.qIndex + 1;
+    el.gaugeBar.classList.remove("yellow","red");
+    el.gaugeBar.classList.add(color);
+    el.gaugeBar.style.transform = "scaleX(1)";
+    el.gaugeWrap.classList.add("show");
 
-    // 背景は「待たずに」更新
-    const normalImg = g.normal[(qn - 1) % g.normal.length];
-    setBgFast(bgEls.game, normalImg);
-
-    qEl.textContent = state.questions[state.qIndex];
-    updateCounter(`${qn}/25`);
-
-    setChoices(["いいえ", "はい", "ギュウ", "チー"], (pick) => onAnswer(pick));
-  }
-
-  function battleTimeByLv(lv) {
-    if (lv <= 1) return 1500;
-    if (lv === 2) return 1100;
-    return 850;
-  }
-
-  async function startInvasionBattle(lv) {
-    // ★ここが重要：UIを先に出してから画像ロード
-    try {
-      state.inBattle = true;
-      lockChoices(false);
-      hideGauge();
-
-      // まず問題文/選択肢を即切替（これで「登場だけ」にならない）
-      qEl.textContent = `チー娘 Lv${lv}\n「チーと言えば？」`;
-      speechEl.textContent = "";
-
-      setChoices(["いいえ", "はい", "ギュウ", "チー"], async (pick) => {
-        if (!state.inBattle) return;
-        state.inBattle = false;
-        hideGauge();
-
-        if (pick === "ギュウ") {
-          speechEl.textContent = "ギュウ";
-          await wait(380);
-          speechEl.textContent = "";
-        } else {
-          await showGameOver(true);
-        }
-      });
-
-      // 登場表示（見える）
-      await showChiBanner("チー娘登場", 900);
-
-      // 背景は後追いで（失敗しても止まらない）
-      setBgFast(bgEls.game, getGirl(state.girlKey).top);
-
-      // ゲージ開始（チー娘戦だけ）
-      const ms = battleTimeByLv(lv);
-      runGauge(ms, lv >= 3 ? "red" : "yellow", async () => {
-        if (!state.inBattle) return;
-        state.inBattle = false;
-        await showGameOver(true);
-      });
-
-      if (lv >= 3) shakeOnce();
-
-    } catch {
-      // 何が起きても復帰
-      state.inBattle = false;
-      hideGauge();
-      lockChoices(false);
-    }
-  }
-
-  async function onAnswer(pick) {
-    lockChoices(true);
-
-    if (state.mode === "quiz") {
-      if (state.counts[pick] != null) state.counts[pick] += 1;
-    }
-
-    // Q25 ギュウ以外即死
-    if (state.mode === "quiz" && state.qIndex === 24) {
-      if (pick !== "ギュウ") { await showGameOver(false); return; }
-      await showClearAndScore();
-      return;
-    }
-
-    if (state.mode === "quiz") {
-      const qn = state.qIndex + 1;
-      if (state.battlePlan.includes(qn) && state.battleDone < 3) {
-        state.battleDone += 1;
-        state.battleLv = state.battleDone;
-
-        await startInvasionBattle(state.battleLv);
-
-        // バトルが終わったら次へ
-        state.qIndex += 1;
-        await showQuestion();
+    const tick = () => {
+      const now = performance.now();
+      const remain = Math.max(0, timerEndAt - now);
+      const ratio = ms <= 0 ? 0 : (remain / ms);
+      el.gaugeBar.style.transform = `scaleX(${ratio})`;
+      if (remain <= 0) {
+        stopTimer();
+        if (typeof timerOnTimeout === "function") timerOnTimeout();
         return;
       }
-    }
-
-    state.qIndex += 1;
-    await showQuestion();
-  }
-
-  async function startQuiz() {
-    state.mode = "quiz";
-    state.qIndex = 0;
-    state.questions = build25();
-    state.counts = { "はい": 0, "いいえ": 0, "チー": 0, "ギュウ": 0 };
-    planInvasions();
-
-    resultBox?.classList.add("hide");
-
-    showScreen("game");
-    setBgFast(bgEls.game, getGirl(state.girlKey).normal[0]);
-    await showQuestion();
-  }
-
-  async function startCheeMode() {
-    state.mode = "chee";
-    state.cheeStage = 1;
-
-    showScreen("game");
-    setBgFast(bgEls.game, getGirl(state.girlKey).top);
-    updateCounter("STAGE 1");
-    await showChiBanner("チー娘モード", 900);
-
-    await runCheeStage();
-  }
-
-  function stageTime(stage) {
-    return Math.max(450, 1400 - stage * 85);
-  }
-
-  async function runCheeStage() {
-    const st = state.cheeStage;
-    state.inBattle = true;
-
-    updateCounter(`STAGE ${st}`);
-    qEl.textContent = `ステージ ${st}\n「チーと言えば？」`;
-    speechEl.textContent = "";
-
-    // Lv3以上で震える
-    if (st >= 3) shakeOnce();
-
-    lockChoices(false);
-    setChoices(["いいえ", "はい", "ギュウ", "チー"], async (pick) => {
-      if (!state.inBattle) return;
-      state.inBattle = false;
-      hideGauge();
-
-      if (pick === "ギュウ") {
-        speechEl.textContent = "ギュウ";
-        if (st > state.cheeBest) {
-          state.cheeBest = st;
-          setBestStage(st);
-        }
-        await wait(220);
-        state.cheeStage += 1;
-        await runCheeStage();
-      } else {
-        await showCheeGameOver(st);
-      }
-    });
-
-    await showChiBanner(`チー娘 Lv${Math.min(3, st)}`, 420);
-
-    runGauge(stageTime(st), st >= 3 ? "red" : "yellow", async () => {
-      if (!state.inBattle) return;
-      state.inBattle = false;
-      await showCheeGameOver(st);
-    });
-  }
-
-  async function showGameOver(isChi) {
-    hideGauge();
-    lockChoices(true);
-    updateCounter("GAME OVER");
-
-    const g = getGirl(state.girlKey);
-    setBgFast(bgEls.game, isChi ? g.chiGameover : g.gameover);
-
-    qEl.textContent = "GAME OVER";
-    speechEl.textContent = "";
-    setChoices(["TOPへ戻る"], async () => goTop());
-  }
-
-  async function showCheeGameOver(stage) {
-    hideGauge();
-    lockChoices(true);
-    updateCounter("GAME OVER");
-
-    const g = getGirl(state.girlKey);
-    setBgFast(bgEls.game, g.chiGameover || g.gameover);
-
-    qEl.textContent = `GAME OVER\n到達ステージ：${stage}\nBEST：${Math.max(getBestStage(), stage)}`;
-    speechEl.textContent = "";
-    setChoices(["もう一回", "TOPへ"], async (pick) => {
-      if (pick === "もう一回") await startCheeMode();
-      else await goTop();
-    });
-  }
-
-  function calcPct() {
-    const vals = Object.values(state.counts);
-    const max = Math.max(...vals);
-    const min = Math.min(...vals);
-    const diff = max - min;
-    return Math.max(0, Math.min(100, 100 - diff * 8));
-  }
-  function pickRank(pct) {
-    if (pct >= 85) return "s";
-    if (pct >= 70) return "a";
-    if (pct >= 55) return "b";
-    if (pct >= 40) return "c";
-    return "d";
-  }
-  const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-  async function showClearAndScore() {
-    hideGauge();
-    lockChoices(true);
-
-    const g = getGirl(state.girlKey);
-    const gifted = Math.random() < 0.02;
-    if (gifted) setStar(g.key);
-
-    setBgFast(bgEls.game, rand(g.clear));
-
-    const pct = gifted ? 100 : calcPct();
-    const rank = gifted ? "s" : pickRank(pct);
-
-    qEl.textContent = gifted ? "チー牛ギフテッド（チギュテッド）" : "診断結果";
-    speechEl.textContent = "";
-
-    if (resultBox && resultPct) {
-      resultBox.classList.remove("hide");
-      animatePct(pct);
-    }
-
-    const rankImg = g.score?.[rank]?.length ? rand(g.score[rank]) : null;
-    if (rankImg) setBgFast(bgEls.game, rankImg);
-
-    setChoices(["TOPへ戻る"], async () => {
-      resultBox?.classList.add("hide");
-      await goTop();
-    });
-  }
-
-  function animatePct(target) {
-    const el = resultPct;
-    if (!el) return;
-    let cur = 0;
-    const start = performance.now();
-    const dur = 800;
-    const tick = () => {
-      const p = Math.min(1, (performance.now() - start) / dur);
-      cur = Math.floor(target * p);
-      el.innerHTML = `${cur}<small>%</small>`;
-      if (p < 1) requestAnimationFrame(tick);
+      timerRAF = requestAnimationFrame(tick);
     };
-    requestAnimationFrame(tick);
+    timerRAF = requestAnimationFrame(tick);
   }
 
-  function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+  /* ========= TEXT / SPEECH ========= */
+  function setQuestionText(t) {
+    el.question.textContent = t || "";
+  }
+  function setSpeechText(t) {
+    el.speech.textContent = t || "";
+  }
 
-  async function goTop() {
-    hideGauge();
-    state.inBattle = false;
-    updateCounter("-");
-    showScreen("top");
-    setBgFast(bgEls.top, getTopBg());
+  /* ========= GAME STATE ========= */
+  const STATE = {
+    mode: null, // "quiz" | "chee"
+    girlKey: getSavedGirl(),
+    qIndex: 0,
+    totalQ: 25,
+
+    // chi battle
+    inChiBattle: false,
+    chiLevel: 0,
+
+    // chee mode stage
+    stage: 0,
+    bestStage: getBestStage(),
+  };
+
+  function currentGirl() {
+    return girlByKey(STATE.girlKey);
   }
 
   function updateBestLine() {
-    if (bestLine) bestLine.textContent = `チー娘 BEST：ステージ${getBestStage()}`;
+    if (!el.bestLine) return;
+    STATE.bestStage = getBestStage();
+    el.bestLine.textContent = `チー娘 BEST：ステージ${STATE.bestStage}`;
   }
 
-  btnGoGirl?.addEventListener("click", async () => {
-    await applyCommonBg();
+  /* ========= QUESTIONS (25) =========
+     1問目固定 / 25問目は「ギュウ」以外即ゲームオーバー用
+  */
+  const quizQuestions = [
+    { text: "あなたはチー牛ですか？", correct: ["はい","ギュウ"] }, // ※“ギュウでも正解扱い”にして遊びやすく
+    { text: "チーと言えば？", correct: ["ギュウ"] },
+    { text: "石原さとみさんに「チー」って言われたら？", correct: ["ギュウ"] },
+    { text: "石原さとみさんに「ギュウ」って言ってもらいたい？", correct: ["はい","ギュウ"] },
+    { text: "チーズ牛丼を頼んだ人を一瞬だけ見てしまったことはありますか？", correct: ["はい","ギュウ"] },
+    { text: "知らない人を見て『チー牛かも』と思ってしまったことはありますか？", correct: ["はい","ギュウ"] },
+    { text: "あなたの友人にチー牛はいますか？", correct: ["はい","ギュウ"] },
+    { text: "大谷翔平選手に言ってほしい言葉1位は『チー牛食おうぜ！』だと思う？", correct: ["はい","ギュウ"] },
+    { text: "『チーギュウ返し』って本当にあると思う？", correct: ["はい","ギュウ"] },
+    { text: "三度の飯よりチー牛が好き？", correct: ["はい","ギュウ"] },
+
+    { text: "今日、なぜかギュウって言いたくなってる？", correct: ["はい","ギュウ"] },
+    { text: "『チー』と聞いたら反射で？", correct: ["ギュウ"] },
+    { text: "今の気分はチー？ギュウ？", correct: ["ギュウ"] },
+    { text: "“ギュウ”って言う時、ちょっと誇らしい？", correct: ["はい","ギュウ"] },
+    { text: "チーズ牛丼の湯気でイケメンに見える時がありますか？", correct: ["はい","ギュウ"] },
+
+    { text: "あなたは“チギュテッド”になれる素質がある？", correct: ["はい","ギュウ"] },
+    { text: "ギュウを言わずに我慢できる？", correct: ["いいえ","ギュウ"] },
+    { text: "このゲーム、実はもう答え分かってる？", correct: ["はい","ギュウ"] },
+    { text: "今ここで『チー』って言ったら…？", correct: ["ギュウ"] },
+    { text: "最後はどうせギュウだと思ってますか？", correct: ["はい","ギュウ"] },
+
+    { text: "“チー”って言われたら0.2秒以内に？", correct: ["ギュウ"] },
+    { text: "あなたの中のチー牛度は高い？", correct: ["はい","ギュウ"] },
+    { text: "ギュウって答えるの、気持ちいい？", correct: ["はい","ギュウ"] },
+    { text: "ここまで来たなら、もう…？", correct: ["ギュウ"] },
+
+    // 25問目：ギュウ以外は即GAME OVER
+    { text: "ラスト。チーと言えば？", correct: ["ギュウ"], forceGyuuOnly: true },
+  ];
+
+  /* ========= CHI BATTLE SETTINGS ========= */
+  function chiBattleDuration(level) {
+    // 診断モードの乱入＆チー娘モード共通
+    if (level <= 1) return 2600;
+    if (level === 2) return 1800;
+    return 1200; // Lv3+
+  }
+  function chiBattleColor(level) {
+    return level >= 3 ? "red" : "yellow";
+  }
+  function shouldShake(level) {
+    return level >= 3;
+  }
+
+  function makeChi10Choices() {
+    // “ギュウ” + 9個デコイ（それっぽく）
+    const pool = [
+      "チー", "はい", "いいえ", "モー", "ギュー", "ギュ〜", "ギュウ…", "チーズ", "牛丼"
+    ];
+    // シャッフルして9個選ぶ（固定でもいいけど少しランダム）
+    const a = pool.slice();
+    for (let i=a.length-1;i>0;i--){
+      const j = (Math.random()*(i+1))|0;
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    const picks = a.slice(0,9);
+    const all = ["ギュウ", ...picks];
+    // 位置もランダムに
+    for (let i=all.length-1;i>0;i--){
+      const j = (Math.random()*(i+1))|0;
+      [all[i],all[j]]=[all[j],all[i]];
+    }
+    return all;
+  }
+
+  /* ========= GAMEOVER / RESULT ========= */
+  async function showGameOver({ chi=false } = {}) {
+    stopTimer();
+    disableChoices();
+    setSpeechText("");
+    setCounter("GAME OVER");
+
+    // 背景画像を gameover に
+    const g = currentGirl();
+    const url = chi ? girlChiGO(g) : girlGO(g);
+    await setBgImage(el.game, url);
+
+    // どこタップでもトップに戻す（誤タップ防止で1秒ディレイ）
+    const blocker = document.createElement("div");
+    blocker.style.position = "absolute";
+    blocker.style.inset = "0";
+    blocker.style.zIndex = "10";
+    blocker.style.background = "transparent";
+    el.game.appendChild(blocker);
+
+    setTimeout(() => {
+      blocker.addEventListener("click", () => {
+        blocker.remove();
+        goTop();
+      }, { once:true });
+    }, 900);
+  }
+
+  async function showResultRandom() {
+    // 今は採点ガチにしない：80〜100ランダム（チギュテッド2%）
+    let pct = 80 + ((Math.random()*21)|0);
+    if (Math.random() < 0.02) pct = 100;
+
+    if (el.resultPct) el.resultPct.innerHTML = `${pct}<small>%</small>`;
+    if (el.resultBox) el.resultBox.classList.remove("hide");
+
+    // 結果画像（スコア画像があるなら将来ここで出し分け）
+    const g = currentGirl();
+    await setBgImage(el.game, girlClear(g, 1)); // とりあえず clear_01
+  }
+
+  /* ========= QUIZ FLOW ========= */
+  const chiIntrusions = [7, 15, 21]; // 1-based question index で最低3回
+  let chiIntrusionCursor = 0;
+
+  function isNextIntrusion(qNumber1Based) {
+    const target = chiIntrusions[chiIntrusionCursor];
+    return target === qNumber1Based;
+  }
+
+  async function startQuiz() {
+    STATE.mode = "quiz";
+    STATE.qIndex = 0;
+    STATE.inChiBattle = false;
+    STATE.chiLevel = 0;
+    chiIntrusionCursor = 0;
+
+    el.resultBox?.classList.add("hide");
+
+    await setBgImage(el.game, girlNormal(currentGirl(), 1));
+    showScreen(el.game);
+    nextQuizQuestion();
+  }
+
+  async function nextQuizQuestion() {
+    stopTimer();
+    document.body.classList.remove("chi-shake");
+    STATE.inChiBattle = false;
+
+    const qNum = STATE.qIndex + 1;
+    if (qNum > STATE.totalQ) {
+      // 結果
+      await showResultRandom();
+      // 2秒後にトップへ戻す（雑に）
+      setTimeout(goTop, 2500);
+      return;
+    }
+
+    setCounter(`${qNum}/${STATE.totalQ}`);
+
+    // 乱入チェック（ただしラストは固定で邪魔しない）
+    if (qNum < STATE.totalQ && isNextIntrusion(qNum)) {
+      chiIntrusionCursor++;
+      const level = Math.min(3, chiIntrusionCursor); // Lv1->Lv2->Lv3
+      await showChiEntrance(level, () => startChiBattle(level, { afterWin: () => {
+        // バトル勝利後に同じ問題へ戻る（問題は消さない）
+        nextQuizQuestion();
+      }}));
+      return;
+    }
+
+    const q = quizQuestions[STATE.qIndex] || quizQuestions[quizQuestions.length-1];
+    setQuestionText(q.text);
+    setSpeechText("");
+
+    // 背景は通常画像を軽く回す（存在しない番号でも落ちない）
+    const g = currentGirl();
+    const bgNo = ((STATE.qIndex % 15) + 1);
+    await setBgImage(el.game, girlNormal(g, bgNo));
+
+    // 4択
+    const four = ["いいえ", "はい", "ギュウ", "チー"];
+    renderChoices(four, async (pick) => {
+      disableChoices();
+
+      // ラストの “ギュウ以外即死”
+      if (q.forceGyuuOnly && pick !== "ギュウ") {
+        await showGameOver({ chi:false });
+        return;
+      }
+
+      // 通常判定（基本ゆるめ）
+      if ((q.correct || []).includes(pick)) {
+        // 正解演出は “ギュウ”固定
+        setSpeechText("ギュウ");
+        setTimeout(() => {
+          STATE.qIndex++;
+          nextQuizQuestion();
+        }, 420);
+      } else {
+        // 不正解は無言 or …
+        setSpeechText("……");
+        setTimeout(async () => {
+          await showGameOver({ chi:false });
+        }, 380);
+      }
+    });
+
+    STATE.qIndex++;
+    // ↑ここでインクリメントすると乱入でズレるのでダメ
+    // → 直前で進めない：クリック時に進める
+    STATE.qIndex--;
+  }
+
+  /* ========= CHI ENTRANCE / BATTLE ========= */
+  async function showChiEntrance(level, onDone) {
+    // “チー娘登場” を一瞬出してから切り替える
+    stopTimer();
+    document.body.classList.remove("chi-shake");
+    setSpeechText("");
+
+    // 表示文
+    setQuestionText(`チー娘 Lv${level}「チーと言えば？」`);
+    renderChoices(["チー娘登場"], () => {}, { disabled:true });
+
+    // 背景は “そのまま”でOK（ここでは変えない）
+    setTimeout(() => {
+      if (typeof onDone === "function") onDone();
+    }, 480);
+  }
+
+  async function startChiBattle(level, { afterWin } = {}) {
+    STATE.inChiBattle = true;
+    STATE.chiLevel = level;
+
+    // 10択に切り替え
+    setQuestionText(`チー娘 Lv${level}「チーと言えば？」`);
+    setSpeechText("");
+
+    const labels = makeChi10Choices();
+
+    // Lv3以上は揺らす
+    if (shouldShake(level)) document.body.classList.add("chi-shake");
+    else document.body.classList.remove("chi-shake");
+
+    // ゲージ表示（チー娘の時だけ！）
+    const ms = chiBattleDuration(level);
+    startTimer(ms, {
+      color: chiBattleColor(level),
+      onTimeout: async () => {
+        document.body.classList.remove("chi-shake");
+        await showGameOver({ chi:true });
+      }
+    });
+
+    renderChoices(labels, async (pick) => {
+      stopTimer();
+      disableChoices();
+      document.body.classList.remove("chi-shake");
+
+      if (pick === "ギュウ") {
+        setSpeechText("ギュウ");
+        setTimeout(() => {
+          if (typeof afterWin === "function") afterWin();
+        }, 380);
+      } else {
+        setSpeechText("……");
+        setTimeout(async () => {
+          await showGameOver({ chi:true });
+        }, 240);
+      }
+    });
+  }
+
+  /* ========= CHEE MODE (10択連戦) ========= */
+  async function startCheeMode() {
+    STATE.mode = "chee";
+    STATE.stage = 0;
+    STATE.inChiBattle = true;
+    STATE.chiLevel = 1;
+
+    el.resultBox?.classList.add("hide");
+
+    // 背景をトップ寄り（通常は normal を回す）
+    await setBgImage(el.game, girlNormal(currentGirl(), 1));
+    showScreen(el.game);
+
+    nextCheeStage();
+  }
+
+  function stageToLevel(stage) {
+    // stage 1-3 => Lv1, 4-6 => Lv2, 7+ => Lv3
+    if (stage <= 3) return 1;
+    if (stage <= 6) return 2;
+    return 3;
+  }
+
+  async function nextCheeStage() {
+    STATE.stage++;
+    const level = stageToLevel(STATE.stage);
+    setCounter(`STAGE ${STATE.stage}`);
+
+    // 背景は適当に回す（A/B/Cは15枚ある前提）
+    const g = currentGirl();
+    const bgNo = ((STATE.stage - 1) % 15) + 1;
+    await setBgImage(el.game, girlNormal(g, bgNo));
+
+    await showChiEntrance(level, () => {
+      startChiBattle(level, {
+        afterWin: () => {
+          // ベスト更新
+          const best = getBestStage();
+          if (STATE.stage > best) setBestStage(STATE.stage);
+          // 次へ
+          nextCheeStage();
+        }
+      });
+    });
+  }
+
+  /* ========= GIRL SELECT UI ========= */
+  function renderGirlGrid() {
+    if (!el.girlGrid) return;
+    el.girlGrid.innerHTML = "";
+
+    const saved = getSavedGirl();
+    girls.forEach((g) => {
+      const tile = document.createElement("button");
+      tile.type = "button";
+      tile.className = "girlTile" + (g.key === saved ? " active" : "") + (g.locked ? " locked" : "");
+      tile.dataset.key = g.key;
+
+      const icon = girlIcon(g);
+
+      tile.innerHTML = `
+        <div class="iconBox"><img alt="${g.name}" src="${icon}"></div>
+        <div class="girlName">${g.name}</div>
+        ${g.locked ? `<div class="lockBadge">LOCK</div>` : ``}
+      `;
+
+      tile.addEventListener("click", () => {
+        // ロックでも選択は可能（表示は出す）／ただしゲーム開始は弾く
+        STATE.girlKey = g.key;
+        saveGirl(g.key);
+        renderGirlGrid();
+        // 背景をその子のtopに
+        setBgImage(el.girl, girlTop(g));
+      });
+
+      el.girlGrid.appendChild(tile);
+    });
+  }
+
+  /* ========= NAV ========= */
+  async function goTop() {
+    stopTimer();
+    document.body.classList.remove("chi-shake");
+    setCounter("-");
+    setQuestionText("");
+    setSpeechText("");
+    el.resultBox?.classList.add("hide");
+
+    // top背景
+    // あるなら top_keyvisual_01.png を優先
+    await setBgImage(el.top, "top_keyvisual_01.png");
+    showScreen(el.top);
+  }
+
+  async function goGirlSelect() {
+    stopTimer();
+    document.body.classList.remove("chi-shake");
+    setCounter("-");
     renderGirlGrid();
-    showScreen("girl");
-  }, { passive: true });
+    const g = currentGirl();
+    await setBgImage(el.girl, girlTop(g));
+    showScreen(el.girl);
+  }
 
-  btnGirlBack?.addEventListener("click", async () => goTop(), { passive: true });
-
-  btnGoMode?.addEventListener("click", async () => {
+  async function goModeSelect() {
+    stopTimer();
+    document.body.classList.remove("chi-shake");
+    setCounter("-");
     updateBestLine();
-    setBgFast(bgEls.mode, getGirl(state.girlKey).top);
-    showScreen("mode");
-  }, { passive: true });
 
-  btnModeBack?.addEventListener("click", async () => {
-    renderGirlGrid();
-    showScreen("girl");
-  }, { passive: true });
+    const g = currentGirl();
+    await setBgImage(el.mode, girlTop(g));
+    showScreen(el.mode);
+  }
 
-  btnStartQuiz?.addEventListener("click", async () => startQuiz(), { passive: true });
-  btnStartChee?.addEventListener("click", async () => startCheeMode(), { passive: true });
+  function ensureUnlockedForPlay() {
+    const g = currentGirl();
+    if (!g.locked) return true;
+    // ロックは開始不可（でも選択画面は出す）
+    alert("この女の子はLOCK中だよ（A〜Cを選んでね）");
+    return false;
+  }
 
-  (async function init() {
-    state.girlKey = getSavedGirl();
-    updateBestLine();
-    setBgFast(bgEls.top, getTopBg());
-    showScreen("top");
+  /* ========= EVENTS ========= */
+  el.btnGoGirl?.addEventListener("click", goGirlSelect);
+  el.btnGirlBack?.addEventListener("click", goTop);
+  el.btnGoMode?.addEventListener("click", () => {
+    if (!ensureUnlockedForPlay()) return;
+    goModeSelect();
+  });
+
+  el.btnModeBack?.addEventListener("click", goGirlSelect);
+
+  el.btnStartQuiz?.addEventListener("click", () => {
+    if (!ensureUnlockedForPlay()) return;
+    startQuiz();
+  });
+
+  el.btnStartChee?.addEventListener("click", () => {
+    if (!ensureUnlockedForPlay()) return;
+    startCheeMode();
+  });
+
+  /* ========= INIT ========= */
+  // 先読み（体感改善）
+  (async () => {
+    // top keyvisual を先読み
+    await preload("top_keyvisual_01.png");
+    // A/B/C の icon/top を先読み
+    girls.slice(0,3).forEach(g => {
+      preload(girlIcon(g));
+      preload(girlTop(g));
+      preload(girlNormal(g,1));
+      preload(girlNormal(g,2));
+      preload(girlChiGO(g));
+      preload(girlGO(g));
+    });
   })();
+
+  goTop();
 
 })();
