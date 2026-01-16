@@ -226,13 +226,40 @@ function showQuestion(){
 }
 
 function maybeChee(){
-  if(forcedCheeQueue.length>0){
-    startCheeBattle(forcedCheeQueue.shift());
+  if(ended) return;
+
+  // ★ 25問版：Q1(i=0) と Q25(i=24) は乱入禁止（固定問題）
+  if(i === 0 || i === questions.length - 1){
+    i++;
+    if(i < questions.length) showQuestion();
+    else endResult();
     return;
   }
-  i++;
-  if(i<questions.length) showQuestion();
-  else endResult();
+
+  // 念のため：最終問以降は結果へ
+  if(i >= questions.length - 1){
+    endResult();
+    return;
+  }
+
+  // チー娘乱入
+  if(!cheeCooldown && Math.random() < CHEE_RATE){
+    cheeCooldown = true;
+
+    setButtonsEnabled(false);
+    gameScreen.classList.add("hold");
+
+    setTimeout(()=>{
+      gameScreen.classList.remove("hold");
+      startCheeBattle(pickCheeLevelNormal());
+    }, CHEE_PRE_HOLD_MS);
+
+  }else{
+    cheeCooldown = false;
+    i++;
+    if(i < questions.length) showQuestion();
+    else endResult();
+  }
 }
 
 function startCheeBattle(level){
