@@ -1,1070 +1,1329 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>チーと言えばギュウと答える v0.30.6</title>
-  <style>
-    :root{
-      --bg1:#f6fbff;
-      --bg2:#fff7fb;
-      --ink:#18202a;
-      --muted:#5b6572;
-      --card:rgba(255,255,255,.62);
-      --card2:rgba(255,255,255,.72);
-      --stroke:rgba(20,30,40,.10);
-      --shadow:0 10px 30px rgba(10,20,30,.10);
-      --r:18px;
-      --pad:14px;
-      --btnpad:14px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>チーと言えばギュウと答える</title>
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      color:var(--ink);
-      font-family: -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      background:
-        radial-gradient(1200px 800px at 20% 10%, var(--bg1), transparent 60%),
-        radial-gradient(1200px 800px at 80% 0%, var(--bg2), transparent 55%),
-        linear-gradient(#ffffff,#f7fbff);
-    }
+<style>
+*{box-sizing:border-box}
+:root{
+  --maxw:560px;
+  --pad:16px;
+  --stroke:rgba(255,255,255,.55);
 
-    /* App frame */
-    #app{
-      max-width: 460px;
-      margin: 0 auto;
-      padding: calc(10px + var(--safe-top)) 12px calc(18px + var(--safe-bottom));
-    }
+  /* icon frame 統一 */
+  --iconFrame:8px;
+  --iconRadius:14px;
+}
+body{
+  margin:0;
+  background:#000;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+}
+.app{
+  max-width:var(--maxw);
+  margin:0 auto;
+  min-height:100svh;
+  display:flex;
+  flex-direction:column;
+}
 
-    /* Top area (image) */
-    .girlWrap{
-      width:100%;
-      border-radius: 22px;
-      overflow:hidden;
-      background: rgba(255,255,255,.45);
-      border:1px solid var(--stroke);
-      box-shadow: var(--shadow);
-    }
-    .girlImg{
-      width:100%;
-      height: 300px;
-      object-fit: contain;
-      display:block;
-      background: transparent;
-    }
+/* header */
+header{
+  padding:12px 16px;
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.08em;
+  opacity:.95;
+}
 
-    /* Speech bubble */
-    .bubble{
-      margin-top: 10px;
-      padding: 12px 14px;
-      border-radius: 18px;
-      background: var(--card2);
-      border: 1px solid var(--stroke);
-      box-shadow: 0 6px 18px rgba(10,20,30,.08);
-      font-size: 15px;
-      line-height: 1.45;
-    }
+/* screens */
+.screen{flex:1;position:relative;overflow:hidden}
+.hide{display:none!important}
+.bg{
+  position:absolute; inset:0;
+  background-size:cover;
+  background-position:center;
+  transform:scale(1.02);
+  transition:transform .35s ease, filter .35s ease;
+}
+.overlay{
+  position:absolute; inset:0;
+  padding:var(--pad);
+  display:flex;
+}
 
-    /* Question card */
-    .card{
-      margin-top: 10px;
-      padding: 12px 14px;
-      border-radius: var(--r);
-      background: var(--card);
-      border: 1px solid var(--stroke);
-      box-shadow: 0 8px 22px rgba(10,20,30,.08);
-    }
-    .qmeta{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      white-space: nowrap;
-    }
-    .qtext{
-      font-weight: 800;
-      font-size: 16px;
-      letter-spacing: .2px;
-      white-space: pre-wrap;
-    }
+/* common panel */
+.panel{
+  width:100%;
+  text-align:center;
+  text-shadow:0 10px 28px rgba(0,0,0,.80);
+}
+.titleBig{
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:.14em;
+  margin:0 0 14px;
+}
+.subLine{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.12em;
+  opacity:.95;
+  margin:0 0 16px;
+}
+.bigBtn{
+  width:min(360px, 92%);
+  font-size:18px;
+  padding:16px 18px;
+  border:none;
+  border-radius:16px;
+  background:#ffffff22;
+  color:#fff;
+  font-weight:900;
+}
 
-    /* Buttons (透過カード統一) */
-    .grid{
-      margin-top: 10px;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .btn{
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      border-radius: var(--r);
-      background: var(--card);
-      border: 1px solid var(--stroke);
-      box-shadow: 0 8px 22px rgba(10,20,30,.08);
-      padding: var(--btnpad) 12px;
-      text-align:center;
-      font-weight: 800;
-      font-size: 16px;
-      letter-spacing: .3px;
-      transition: transform .06s ease, filter .06s ease;
-    }
-    .btn:active{ transform: scale(.98); filter: brightness(.98); }
-    .btn.small{ font-size: 13px; padding: 10px 12px; font-weight: 800; }
-    .btn.ghost{ background: rgba(255,255,255,.48); }
-    .btn.warn{ background: rgba(255,235,235,.66); }
-    .btn.ok{ background: rgba(235,255,245,.66); }
+/* =========================
+   PAGE 1: TOP（メニュー下げ）
+========================= */
+#topScreen .bg{ background-image:url("top_keyvisual_01.png"); }
+#topScreen .overlay{
+  justify-content:flex-start;
+  align-items:flex-start;
 
-    /* Bottom menu (下げ気味) */
-    .menuRow{
-      margin-top: 22px; /* 下げ気味：顔を隠さない */
-      display:flex;
-      gap:10px;
-      justify-content:space-between;
-      align-items:center;
-      opacity:.85;
-    }
-    .menuLeft, .menuRight{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    .pill{
-      font-size: 12px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.55);
-      border: 1px solid var(--stroke);
-      box-shadow: 0 8px 22px rgba(10,20,30,.06);
-      user-select:none;
-    }
-    .pill strong{ font-weight: 900; }
+  /* ★ここが「メニュー位置」：確実に下げる */
+  padding-top:260px;
+}
+#topScreen .panel{ transform:translateY(0); }
+#topScreen .note{ margin-top:10px; }
 
-    /* Screens */
-    .screen{ display:none; }
-    .screen.on{ display:block; }
+/* version bottom */
+#versionTag{
+  position:absolute;
+  left:0; right:0;
+  bottom:18px;
+  text-align:center;
+  font-weight:900;
+  letter-spacing:.20em;
+  opacity:.85;
+  text-shadow:0 10px 28px rgba(0,0,0,.75);
+  pointer-events:none;
+}
 
-    /* Girl selection list (縦スクロール) */
-    .girlList{
-      margin-top: 10px;
-      display:flex;
-      flex-direction:column;
-      gap: 10px;
-      max-height: 310px;
-      overflow:auto;
-      padding-right: 4px;
-    }
-    .girlItem{
-      display:flex;
-      gap: 12px;
-      align-items:center;
-      padding: 12px;
-      border-radius: var(--r);
-      background: var(--card);
-      border: 1px solid var(--stroke);
-      box-shadow: 0 8px 22px rgba(10,20,30,.08);
-    }
-    .girlThumb{
-      width: 78px;
-      height: 78px;
-      border-radius: 16px;
-      background: rgba(255,255,255,.55);
-      border: 1px solid var(--stroke);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-      flex:0 0 auto;
-    }
-    .girlThumb img{
-      width:100%;
-      height:100%;
-      object-fit: contain;
-      display:block;
-    }
-    .girlInfo{
-      flex:1;
-      min-width:0;
-    }
-    .girlName{
-      font-weight: 900;
-      font-size: 15px;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .girlDesc{
-      margin-top: 4px;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.35;
-    }
-    .tagRow{
-      margin-top: 8px;
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .tag{
-      font-size: 11px;
-      padding: 6px 8px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.55);
-      border: 1px solid var(--stroke);
-    }
-    .lock{
-      opacity: .55;
-      position: relative;
-    }
-    .lock::after{
-      content:"LOCK";
-      position:absolute;
-      right: 12px;
-      top: 12px;
-      font-size: 11px;
-      font-weight: 900;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(20,30,40,.10);
-      border: 1px solid rgba(20,30,40,.14);
-    }
+/* =========================
+   PAGE 2: GIRL SELECT
+========================= */
+#girlScreen .overlay{
+  justify-content:flex-start;
+  align-items:flex-start;
+  padding-top:120px;
+}
+#girlScreen .panel{ transform:translateY(0); }
 
-    /* Modal (暗幕なし：背景は明るいまま) */
-    .modalWrap{
-      position: fixed;
-      inset: 0;
-      display:none;
-      align-items:flex-end;
-      justify-content:center;
-      padding: 12px 12px calc(12px + var(--safe-bottom));
-      pointer-events:none; /* hidden時にタップ透過 */
-    }
-    .modalWrap.on{
-      display:flex;
-      pointer-events:auto;
-    }
-    .modal{
-      width: min(460px, 100%);
-      border-radius: 22px;
-      background: rgba(255,255,255,.78);
-      border: 1px solid var(--stroke);
-      box-shadow: 0 18px 50px rgba(10,20,30,.18);
-      padding: 14px;
-    }
-    .modalTitle{
-      font-weight: 1000;
-      font-size: 15px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom: 10px;
-    }
-    .modalBody{
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.4;
-      white-space: pre-wrap;
-    }
-    .row{
-      margin-top: 12px;
-      display:flex;
-      gap:10px;
-    }
-    .row .btn{ flex:1; }
+.gridIcons{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
+  margin:14px auto 18px;
+  width:min(520px, 100%);
+}
+.girlTile{
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,255,255,.00);
+  padding:10px;
+  text-align:left;
+  -webkit-tap-highlight-color:transparent;
+}
+.girlTile.active{
+  border-color:var(--stroke);
+  background:rgba(255,255,255,.12);
+}
+.girlTile.locked{
+  opacity:.90;
+  border-color:rgba(255,255,255,.10);
+}
 
-    /* Tiny */
-    .mono{ font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; }
-    .star{ color: #ffcc33; text-shadow: 0 2px 8px rgba(255,180,0,.25); }
-    .hidden{ display:none !important; }
-  </style>
+/* icon frame 統一（ABC/DEF差を軽減） */
+.iconBox{
+  width:100%;
+  aspect-ratio:1/1;
+  border-radius:var(--iconRadius);
+  overflow:hidden;
+  background:rgba(0,0,0,.25);
+  position:relative;
+}
+.iconBox::before{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:var(--iconRadius);
+  box-shadow: inset 0 0 0 var(--iconFrame) rgba(255,255,255,.92);
+  pointer-events:none;
+}
+.iconBox img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.girlName{
+  margin-top:10px;
+  font-weight:900;
+  letter-spacing:.10em;
+  font-size:13px;
+  opacity:.95;
+}
+.lockBadge{
+  position:absolute;
+  top:10px; right:10px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.25);
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.rowBtns{
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:nowrap;
+  margin-top:10px;
+}
+.rowBtns .bigBtn{ width:auto; flex:1; max-width:220px; }
+
+/* =========================
+   PAGE 3: MODE SELECT（ここも下げ）
+========================= */
+#modeScreen .overlay{
+  justify-content:flex-start;
+  align-items:flex-start;
+
+  /* ★ここが「メニュー位置」：確実に下げる */
+  padding-top:220px;
+}
+#modeScreen .panel{ transform:translateY(0); }
+.modeBtns{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  width:min(360px, 92%);
+  margin:0 auto;
+}
+.modeBtn{
+  font-size:18px;
+  padding:16px 18px;
+  border:none;
+  border-radius:16px;
+  background:#ffffff22;
+  color:#fff;
+  font-weight:900;
+}
+.smallBack{
+  margin-top:14px;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.12em;
+  opacity:.9;
+  text-decoration:underline;
+  background:transparent;
+  border:none;
+  color:#fff;
+}
+
+/* =========================
+   GAME SCREEN
+========================= */
+#gameScreen .overlay{
+  flex-direction:column;
+  justify-content:space-between;
+}
+#gameScreen.chee .bg{transform:scale(1.12)}
+#gameScreen.hold .bg{filter:brightness(.92)}
+
+.vignette{
+  position:absolute;inset:0;
+  pointer-events:none;
+  opacity:0;
+  background:radial-gradient(circle,
+    rgba(0,0,0,0) 45%,
+    rgba(0,0,0,.45) 100%);
+  transition:opacity .25s;
+}
+#gameScreen.chee .vignette{opacity:1}
+
+/* cut */
+.cut{
+  position:absolute;inset:0;
+  background:#000;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .28s;
+}
+#gameScreen.cut .cut{opacity:1}
+
+/* announce（下地あり） */
+.announce{
+  position:absolute;inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-weight:900;
+  letter-spacing:.2em;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s;
+  text-shadow:0 10px 28px rgba(0,0,0,.85);
+}
+.announce::before{
+  content:"";
+  position:absolute;
+  width:min(420px, 86%);
+  height:72px;
+  border-radius:18px;
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(6px);
+}
+.announce > span{ position:relative; z-index:1; }
+#gameScreen.announce .announce{opacity:1}
+
+/* flash */
+.flash{
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,.22);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .08s ease-out;
+}
+.flash.on{ opacity:1; }
+
+/* bubble */
+.bubble{
+  position:relative;
+  background:rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:14px;
+  min-height:130px;
+  overflow:visible; /* セリフ切れ対策 */
+}
+.question{
+  font-size:20px;
+  font-weight:800;
+  line-height:1.45;
+  opacity:1;
+  transition:opacity .22s;
+  padding-bottom:62px;
+}
+.question.hide{opacity:0}
+
+/* 返事 */
+#speech{
+  position:absolute;
+  right:14px;
+  bottom:10px;
+  text-align:right;
+  pointer-events:none;
+
+  font-size:clamp(22px, 6vw, 34px);
+  font-weight:900;
+  letter-spacing:.10em;
+  line-height:1.1;
+
+  max-width:88%;
+  white-space:pre-line;
+  word-break:break-word;
+
+  overflow:visible;
+  text-shadow:0 10px 28px rgba(0,0,0,.75);
+}
+
+.cheeWord.big{ transform:scale(1.06); transform-origin:right bottom; }
+
+/* ❤ */
+.heartOnly{ color:#ff2d55; text-shadow:0 8px 22px rgba(255,45,85,.35); }
+.heartGold{ color:#ffd54a; text-shadow:0 10px 26px rgba(255,213,74,.45); }
+@keyframes heartPop{
+  0%{ transform:scale(0.8); opacity:0; }
+  55%{ transform:scale(1.25); opacity:1; }
+  100%{ transform:scale(1); opacity:1; }
+}
+.heartPop{ animation:heartPop .22s ease-out; }
+
+/* ⭐︎⭐︎⭐︎ 背景揺れ */
+@keyframes bgShake {
+  0%   { transform: translate(0, 0) scale(1.12); }
+  20%  { transform: translate(-2px, 1px) scale(1.12); }
+  40%  { transform: translate(2px, -1px) scale(1.12); }
+  60%  { transform: translate(-1px, -2px) scale(1.12); }
+  80%  { transform: translate(1px, 2px) scale(1.12); }
+  100% { transform: translate(0, 0) scale(1.12); }
+}
+#gameScreen.chee.stage3plus .bg{ animation:bgShake .35s infinite; }
+
+/* choices */
+.choices{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.choice{
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:900;
+  color:#fff;
+}
+.choice:disabled{opacity:.55}
+.choices.chee10 .choice{
+  padding:12px;
+  font-size:14px;
+  border-radius:12px;
+}
+
+/* gauge */
+.gauge{
+  height:8px;
+  background:#222;
+  border-radius:999px;
+  overflow:hidden;
+  opacity:0;
+  transform:translateY(8px);
+  transition:opacity .16s, transform .16s;
+  margin-bottom:10px;
+}
+.gauge.show{ opacity:1; transform:translateY(0); }
+.gauge>div{
+  height:100%;
+  width:100%;
+  transform-origin:left;
+  transform:scaleX(0);
+}
+#gaugeBar.yellow{ background:linear-gradient(90deg,#ffe259,#ffa751); }
+#gaugeBar.red{ background:linear-gradient(90deg,#ff416c,#ff4b2b); }
+
+/* RESULT */
+#gameScreen.result .bubble{ display:none; }
+#resultBox{
+  position:absolute;
+  left:16px;
+  right:16px;
+  bottom:180px;
+  pointer-events:none;
+  text-shadow:0 10px 28px rgba(0,0,0,.75);
+}
+#resultBox .label{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:.10em;
+  margin-bottom:12px;
+}
+#resultBox .pctRow{
+  display:flex;
+  justify-content:flex-end;
+  align-items:baseline;
+}
+#resultBox .pct{
+  font-size:52px;
+  font-weight:900;
+  line-height:1;
+}
+#resultBox .pct small{
+  font-size:20px;
+  opacity:.95;
+  margin-left:2px;
+}
+
+.note{
+  font-size:11px;
+  opacity:.80;
+  letter-spacing:.08em;
+  margin-top:10px;
+}
+</style>
 </head>
 
 <body>
-  <div id="app">
+<div class="app">
 
-    <!-- ===== Screen: Select Girl ===== -->
-    <section id="screenSelect" class="screen on">
-      <div class="girlWrap">
-        <img id="selectHeroImg" class="girlImg" src="girlA_top_01.png" alt="girl">
-      </div>
+<header>
+  <div>チーと言えばギュウと答える</div>
+  <div id="counter">-</div>
+</header>
 
-      <div class="bubble" id="selectBubble">最初に女の子を選んでね。</div>
-
-      <div class="card">
-        <div class="qmeta">
-          <div>モード</div>
-          <div id="modeBadge" class="pill"><strong>通常</strong></div>
-        </div>
-        <div class="qtext">チーと言えばギュウと答える</div>
-      </div>
-
-      <div class="card">
-        <div class="qmeta">
-          <div>女の子（追加前提：縦スクロール）</div>
-          <div class="pill mono" id="debugBadge"></div>
-        </div>
-
-        <div class="girlList" id="girlList"></div>
-
-        <div class="row">
-          <div id="toggleAllStarBtn" class="btn small ghost">オールスターモード（課金）</div>
-          <div id="startBtn" class="btn small ok">START</div>
-        </div>
-      </div>
-
-      <div class="menuRow">
-        <div class="menuLeft">
-          <div class="pill mono">v0.30.6</div>
-          <div class="pill">星=チギュテッド閲覧済み</div>
-        </div>
-        <div class="menuRight">
-          <div id="resetStarBtn" class="pill">星リセット</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Screen: Quiz ===== -->
-    <section id="screenQuiz" class="screen">
-      <div class="girlWrap">
-        <img id="girlImg" class="girlImg" src="girlA_normal_01.png" alt="girl">
-      </div>
-
-      <div class="bubble" id="bubble">……</div>
-
-      <div class="card">
-        <div class="qmeta">
-          <div id="qCounter">Q1 / 25</div>
-          <div class="pill mono" id="stagePill">stage 1</div>
-        </div>
-        <div class="qtext" id="qText">あなたはチー牛ですか？</div>
-      </div>
-
-      <div class="grid" id="choices"></div>
-
-      <div class="menuRow">
-        <div class="menuLeft">
-          <div class="pill">暗幕なし</div>
-          <div class="pill" id="allStarPill">通常</div>
-        </div>
-        <div class="menuRight">
-          <div id="toTopBtn" class="pill">トップ</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Screen: Result ===== -->
-    <section id="screenResult" class="screen">
-      <div class="girlWrap">
-        <img id="resultImg" class="girlImg" src="girlA_clear_01.png" alt="result">
-      </div>
-
-      <div class="bubble" id="resultBubble">ギュウ</div>
-
-      <div class="card">
-        <div class="qmeta">
-          <div>結果</div>
-          <div class="pill" id="rankPill">—</div>
-        </div>
-        <div class="qtext" id="resultText">チー牛度：—%</div>
-      </div>
-
-      <div class="card">
-        <div class="qmeta"><div>内訳</div><div class="pill mono" id="countsPill"></div></div>
-        <div id="resultDetail" class="modalBody"></div>
-        <div class="row">
-          <div id="retryBtn" class="btn">もう一回</div>
-          <div id="topBtn2" class="btn ghost">トップに戻る</div>
-        </div>
-      </div>
-
-      <div class="menuRow">
-        <div class="menuLeft">
-          <div class="pill mono">v0.30.6</div>
-        </div>
-        <div class="menuRight">
-          <div class="pill" id="starHint"></div>
-        </div>
-      </div>
-    </section>
-
-  </div>
-
-  <!-- ===== Modal (明るいまま / 暗幕なし) ===== -->
-  <div id="modalWrap" class="modalWrap">
-    <div class="modal">
-      <div class="modalTitle">
-        <div id="modalTitle">通知</div>
-        <div id="modalClose" class="pill">閉じる</div>
-      </div>
-      <div class="modalBody" id="modalBody"></div>
-      <div class="row" id="modalButtons"></div>
+<!-- TOP -->
+<div id="topScreen" class="screen">
+  <div class="bg"></div>
+  <div class="overlay">
+    <div class="panel">
+      <h1 class="titleBig">ガチ！チー牛診断！！</h1>
+      <button class="bigBtn" id="btnGoGirl">START</button>
+      <div class="note">※45問目は「ギュウ」以外でゲームオーバー</div>
     </div>
   </div>
+  <div id="versionTag">VERSION <span id="versionVal"></span></div>
+</div>
+
+<!-- GIRL SELECT -->
+<div id="girlScreen" class="screen hide">
+  <div class="bg"></div>
+  <div class="overlay">
+    <div class="panel">
+      <h1 class="titleBig">女の子を選んでね</h1>
+      <div class="gridIcons" id="girlGrid"></div>
+      <div class="rowBtns" style="margin-top:14px;">
+        <button class="bigBtn" id="btnGirlBack">戻る</button>
+        <button class="bigBtn" id="btnGoMode">次へ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODE SELECT -->
+<div id="modeScreen" class="screen hide">
+  <div class="bg"></div>
+  <div class="overlay">
+    <div class="panel">
+      <h1 class="titleBig">モードを選んでね</h1>
+      <div class="subLine" id="bestLine">チー娘 BEST：ステージ0</div>
+      <div class="modeBtns">
+        <button class="modeBtn" id="btnStartQuiz">チー牛診断</button>
+        <button class="modeBtn" id="btnStartChee">チー娘モード</button>
+      </div>
+      <button class="smallBack" id="btnModeBack">女の子選択に戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen" class="screen hide">
+  <div class="bg"></div>
+  <div class="vignette"></div>
+  <div class="cut"></div>
+  <div class="flash" id="flash"></div>
+  <div class="announce"><span>チー娘登場！！</span></div>
+
+  <div id="resultBox" class="hide">
+    <div class="label">あなたのチー牛度は</div>
+    <div class="pctRow"><div class="pct" id="resultPct">0<small>%</small></div></div>
+  </div>
+
+  <div class="overlay">
+    <div class="bubble" id="bubble">
+      <div id="question" class="question"></div>
+      <div id="speech"></div>
+    </div>
+
+    <div class="gauge" id="gaugeWrap"><div id="gaugeBar"></div></div>
+    <div class="choices" id="choices"></div>
+  </div>
+</div>
+
+</div>
 
 <script>
-(() => {
-  /* =========================
-     v0.30.6 仕様反映まとめ
-     - 25問 / Q1,Q25固定
-     - チー娘乱入 最低3回保証 (Lv1/2/3必ず体験)
-     - チー娘登場演出は必ず見える (スキップ不可：一定時間後に"続ける"が出る)
-     - UI 暗幕なし（モーダルも明るいカード）
-     - 透過カードUIをボタン含め統一
-     - メニュー位置下げ気味
-     - オールスターモードあり
-       * 課金想定（ここではローカル保存）
-       * debug=1 で擬似解放
-       * 登場キャラのみランダム（クイズ中の女の子がランダムに切替）
-       * エンディングは選択中の女の子固定
-     - 女の子追加前提の縦スクロール
-     - 星マーク＝その女の子のチギュテッドエンディング閲覧済み
-  ========================= */
+/* VERSION */
+const APP_VERSION = "v0.30.2";
+document.getElementById("versionVal").textContent = APP_VERSION;
 
-  const qs = new URLSearchParams(location.search);
-  const DEBUG = qs.get("debug") === "1";
+/* 保存キー */
+const CHEE_RECORD_KEY = "cheeGirlBestStage";
+const GIRL_KEY = "selectedGirlKey";
+const GIRL_PREVIEW_KEY = "girlPreviewBgKey";
 
-  const LS = {
-    ALLSTAR: "chi_gyu_allstar_unlocked",
-    STAR_PREFIX: "chi_gyu_star_seen_", // + girlId
+function getBestStage(){ return Number(localStorage.getItem(CHEE_RECORD_KEY)) || 0; }
+function setBestStage(stage){ localStorage.setItem(CHEE_RECORD_KEY, String(stage)); }
+function getSavedGirl(){ return localStorage.getItem(GIRL_KEY) || "A"; }
+function saveGirl(g){ localStorage.setItem(GIRL_KEY, g); }
+function getPreviewKey(){ return localStorage.getItem(GIRL_PREVIEW_KEY) || ""; }
+function setPreviewKey(k){ localStorage.setItem(GIRL_PREVIEW_KEY, k); }
+
+/* 女の子定義 */
+function makeGirl(prefix, key, name, locked=false, chiOverText="……"){
+  const normal = Array.from({length:15}, (_,i)=> `${prefix}_normal_${String(i+1).padStart(2,"0")}.png`);
+  return {
+    key, name, locked,
+    icon: `${prefix}_icon.png`,
+    top:  `${prefix}_top_01.png`,
+    normal,
+    gameover: `${prefix}_gameover_01.png`,
+    chiGameover: `${prefix}_chi_gameover_01.png`,
+    chiOverText,
+    score: {
+      s: Array.from({length:3}, (_,i)=> `${prefix}_score_s_${String(i+1).padStart(2,"0")}.png`),
+      a: Array.from({length:3}, (_,i)=> `${prefix}_score_a_${String(i+1).padStart(2,"0")}.png`),
+      b: Array.from({length:3}, (_,i)=> `${prefix}_score_b_${String(i+1).padStart(2,"0")}.png`)
+    }
   };
+}
+const GIRLS = [
+  makeGirl("girlA","A","Girl A", false, "……（チー娘Aは無言で去っていった）"),
+  makeGirl("girlB","B","Girl B", false, "……（チー娘B：見なかったことにするね）"),
+  makeGirl("girlC","C","Girl C", false, "……（チー娘C：次はちゃんとして？）"),
+  makeGirl("girlD","D","Girl D", true,  "（LOCKED）"),
+  makeGirl("girlE","E","Girl E", true,  "（LOCKED）"),
+  makeGirl("girlF","F","Girl F", true,  "（LOCKED）")
+];
 
-  const $ = (sel) => document.querySelector(sel);
+let selectedGirlKey = getSavedGirl();
 
-  /* ===== Screens ===== */
-  const screenSelect = $("#screenSelect");
-  const screenQuiz   = $("#screenQuiz");
-  const screenResult = $("#screenResult");
+/* 問題（45問） */
+const questions = [
+  { text:"あなたはチー牛ですか？" },
+  { text:"チーと言えば？" },
+  { text:"牛丼屋さんのCMに出ている石原さとみさんに「チー」と言われたら？" },
+  { text:"石原さとみさんに向かって「チー」と言ったら「ギュウ」と答えてくれるイベントを開催して欲しくないですか？" },
+  { text:"石原さとみさんにあの笑顔で「ギュウ」と答えてもらえたら膝から崩れ落ちずにいられますか？" },
+  { text:"牛丼屋さんのCMにも出ているし皆んなが本気で実現させようと思えば実現出来そうな気がしませんか？" },
+  { text:"チーズ牛丼を頼んだ人の顔をついチラ見してしまった事はありますか？" },
+  { text:"知らない人を見て『チー牛かも』と思ってしまったことはありますか？" },
+  { text:"知らない人に見られて「チー牛かも」と思われていそうに感じたことはありますか？" },
+  { text:"あなたの友人にチー牛はいますか？" },
+  { text:"大谷翔平選手が全国の小学生にグローブをプレゼントした際の「野球しようぜ！」という言葉カッコ良かったですね！" },
+  { text:"大谷翔平選手はコンビニのおにぎりのCMに出ていますが「おにぎり食おうぜ！」の方が良かったと思いますか？" },
+  { text:"大谷翔平選手には是非ともチーズ牛丼のCMに出て頂き「チー牛食おうぜ！」と言って欲しいですか？" },
+  { text:"ハイチーズをハイチー牛だと思っていた時期がありますか？" },
+  { text:"写真を撮る時にチーズ牛丼を持ってハイチー牛をしてしまった事がある。" },
+  { text:"麻雀には、チーをされた瞬間にギュウと答えるとチーを取り消す『チーギュウ返し』がある。チー牛返しがある。" },
+  { text:"あなたは三度の飯よりチーズ牛丼が好きですか？" },
+  { text:"気付くと『チー』『ギュウ』『チー』『ギュウ』と交互に言っている事がありますか？" },
+  { text:"山本由伸選手の「負けると言う選択肢はない」という名言はとてもカッコ良かったですね？" },
+  { text:"山本由伸選手に「チーズ牛丼を食べないという選択肢はない」と言ってもらいたいですか？" },
+  { text:"ギリシャの哲学者アリストテレスの「すべての者は生まれながらに知恵を求める。」有名な名言は知っていますか？" },
+  { text:"チー牛界隈にも「すべての者は生まれながらにチーズ牛丼を求める。」という名言があるのを知っていますか？" },
+  { text:"『ギュウ』と答える練習をしたことがありますか？" },
+  { text:"牛丼屋で『チーズ』の文字を見ると一瞬迷いますか？" },
+  { text:"コンビニでチーズ系を見ると、なぜか心がざわつきますか？" },
+  { text:"『チー』と聞こえたら反射的に『ギュウ』が頭に浮かびますか？" },
+  { text:"『ギュウ』と言う時、なぜか誇らしい気持ちになりますか？" },
+  { text:"チーズ牛丼を食べた後、ちょっと強くなった気がしますか？" },
+  { text:"チーと言われると、少しだけ反応してしまいますか？" },
+  { text:"『チー牛』という言葉を、心の中だけで使ったことはありますか？" },
+  { text:"あなたはチー牛を『悪口』ではなく『概念』だと思いますか？" },
+  { text:"チーズ牛丼を『恥ずかしくて頼めない』人は実在すると思いますか？" },
+  { text:"あなたは『頼めないが、本当は食べたい』側ですか？" },
+  { text:"チーズ牛丼を頼む人を見ると、なぜか目が行きますか？" },
+  { text:"『チー牛かも』と思っても、口には出しませんか？" },
+  { text:"『チーと言えばギュウ』と聞いて、少し安心しますか？" },
+  { text:"あなたは自分がチー牛かどうか、時々確認したくなりますか？" },
+  { text:"『チー』と『ギュウ』の関係は、もはや運命だと思いますか？" },
+  { text:"『チーと言えばギュウ』は、人生のセーフティネットだと思いますか？" },
+  { text:"チーと言われたら、ギュウと返したいですか？" },
+  { text:"ギュウと言ったら、相手に❤で返してほしいですか？" },
+  { text:"『ギュウ』と答えると世界が少し平和になると思いますか？" },
+  { text:"最後にひとこと。チーと言えば？" }
+];
 
-  function showScreen(which){
-    [screenSelect, screenQuiz, screenResult].forEach(s => s.classList.remove("on"));
-    which.classList.add("on");
-    window.scrollTo({top:0, behavior:"instant"});
+/* チー娘 */
+const cheeLevelsNormal = [
+  { stars:1, timeMs:2400, gauge:"cool",   weight:0.60 },
+  { stars:2, timeMs:1700, gauge:"yellow", weight:0.30 },
+  { stars:3, timeMs:1200, gauge:"red",    weight:0.10 }
+];
+const CHEE_RATE = 0.35;
+
+const QUESTION_SHOW_DELAY     = 120;
+const GIRL_REPLY_DELAY_MS     = 520;
+const NORMAL_REACT_MS         = 980;
+
+const CHEE_PRE_HOLD_MS        = 760;
+const CUT_MS                  = 420;
+const POST_CUT_HOLD_MS        = 360;
+const CHEE_SILENCE_MS         = 260;
+const CHEE_SUCCESS_HOLD_MS    = 820;
+
+const ANNOUNCE_EXTRA_MS       = 520;
+const FLASH_ON_MS             = 120;
+
+const STAGE3_BOOST_MS = 500;
+const STAGE3_BOOST_MULT = 1.35;
+
+let cheeStage = 1;
+let lastGyuuIndex = -1;
+
+/* 採点（80〜99 / 2%で100） */
+function rollScore(){
+  const r = Math.random();
+  if(r < 0.02) return 100;
+  return randInt(80, 99);
+}
+function rankFromScore(p){
+  if(p === 100) return "gifted";
+  if(p >= 95) return "s";
+  if(p >= 88) return "a";
+  return "b";
+}
+
+/* DOM */
+const counterEl   = document.getElementById("counter");
+
+const topScreen   = document.getElementById("topScreen");
+const girlScreen  = document.getElementById("girlScreen");
+const modeScreen  = document.getElementById("modeScreen");
+const gameScreen  = document.getElementById("gameScreen");
+
+const girlBg      = document.querySelector("#girlScreen .bg");
+const modeBg      = document.querySelector("#modeScreen .bg");
+const gameBg      = document.querySelector("#gameScreen .bg");
+
+const girlGrid    = document.getElementById("girlGrid");
+const bestLine    = document.getElementById("bestLine");
+
+const qEl         = document.getElementById("question");
+const speechEl    = document.getElementById("speech");
+const choicesEl   = document.getElementById("choices");
+
+const gaugeWrap   = document.getElementById("gaugeWrap");
+const gaugeBar    = document.getElementById("gaugeBar");
+const flashEl     = document.getElementById("flash");
+
+const resultBox   = document.getElementById("resultBox");
+const resultPct   = document.getElementById("resultPct");
+
+/* 状態 */
+let gameMode = "quiz";
+let mode = "quiz";
+let locked = false;
+let ended = false;
+let i = 0;
+
+let rafId = 0;
+let cheeCooldown = false;
+let currentCheeLevel = null;
+
+let isNewRecordRun = false;
+
+let previewBgKey = getPreviewKey() || "";
+
+/* utils */
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
+function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+function getGirlByKey(k){ return GIRLS.find(x=>x.key===k) || GIRLS[0]; }
+function getSelectedGirl(){ return getGirlByKey(selectedGirlKey); }
+
+function refreshBestLine(){
+  bestLine.textContent = `チー娘 BEST：ステージ${getBestStage()}`;
+}
+
+/* preload */
+function preloadTops(){
+  GIRLS.forEach(g=>{
+    const im = new Image();
+    im.src = g.top;
+  });
+}
+
+/* bg helpers */
+function setGirlAndModeBgToSelectedTop(){
+  const g = getSelectedGirl();
+  girlBg.style.backgroundImage = `url("${g.top}")`;
+  modeBg.style.backgroundImage = `url("${g.top}")`;
+}
+function setGirlSelectPreviewBg(girlKey){
+  const g = getGirlByKey(girlKey);
+  previewBgKey = g.key;
+  setPreviewKey(g.key);
+  girlBg.style.backgroundImage = `url("${g.top}")`;
+}
+
+/* audio */
+let audioCtx=null;
+function ensureAudio(){
+  if(!audioCtx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AC();
   }
+  if(audioCtx.state === "suspended") audioCtx.resume();
+}
+function playPopSE(){
+  try{
+    ensureAudio();
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
 
-  /* ===== Modal (暗幕なし) ===== */
-  const modalWrap = $("#modalWrap");
-  const modalTitle = $("#modalTitle");
-  const modalBody = $("#modalBody");
-  const modalButtons = $("#modalButtons");
-  const modalClose = $("#modalClose");
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(660, t0);
+    osc.frequency.exponentialRampToValueAtTime(880, t0 + 0.03);
 
-  let modalLocked = false; // trueの間は閉じられない（演出保証用）
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.18, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.10);
 
-  function openModal({title="通知", body="", buttons=[], lockClose=false}){
-    modalTitle.textContent = title;
-    modalBody.textContent = body;
-    modalButtons.innerHTML = "";
-    modalLocked = !!lockClose;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
 
-    buttons.forEach(btn => {
-      const b = document.createElement("div");
-      b.className = "btn small " + (btn.kind || "");
-      b.textContent = btn.label;
-      b.onclick = () => btn.onClick && btn.onClick();
-      modalButtons.appendChild(b);
-    });
+    osc.start(t0);
+    osc.stop(t0 + 0.11);
+  }catch(e){}
+}
+function flashBg(){
+  flashEl.classList.add("on");
+  setTimeout(()=> flashEl.classList.remove("on"), FLASH_ON_MS);
+}
 
-    modalWrap.classList.add("on");
-  }
-  function closeModal(force=false){
-    if(modalLocked && !force) return;
-    modalWrap.classList.remove("on");
-    modalLocked = false;
-  }
-  modalClose.onclick = () => closeModal(false);
+/* ボタン色 */
+const buttonColors = [
+  "#d64545","#c0392b","#e67e22","#f1c40f",
+  "#27ae60","#16a085","#2980b9","#8e44ad",
+  "#2c3e50","#7f8c8d","#ff6b6b","#ffa502"
+];
+function applyRandomColorsToButtons(){
+  const btns = document.querySelectorAll("#choices button.choice");
+  const cols = shuffle(buttonColors);
+  btns.forEach((b,idx)=>{ b.style.background = cols[idx % cols.length]; });
+}
+function setButtonsEnabled(on){
+  document.querySelectorAll("#choices button").forEach(b=>b.disabled=!on);
+}
 
-  /* ===== Data: girls (追加前提) ===== */
-  const girls = [
-    { id:"A", key:"girlA", label:"girlA", top:"girlA_top_01.png", normal:"girlA_normal_01.png", clear:"girlA_clear_01.png" },
-    { id:"B", key:"girlB", label:"girlB", top:"girlB_top_01.png", normal:"girlB_normal_01.png", clear:"girlB_clear_01.png" },
-    { id:"C", key:"girlC", label:"girlC", top:"girlC_top_01.png", normal:"girlC_normal_01.png", clear:"girlC_clear_01.png" },
+/* speech */
+function clearSpeech(){
+  speechEl.className = "";
+  speechEl.textContent = "";
+  speechEl.innerHTML = "";
+}
+function setSpeechPlain(text){
+  speechEl.className = "";
+  speechEl.textContent = text;
+}
+function setHeartOnlyPop(isGold=false){
+  speechEl.className = isGold ? "heartGold" : "heartOnly";
+  speechEl.textContent = "❤";
+  speechEl.classList.remove("heartPop");
+  void speechEl.offsetWidth;
+  speechEl.classList.add("heartPop");
+  playPopSE();
+  flashBg();
+}
+function setGyuuWithHeart(){
+  speechEl.className = "";
+  speechEl.innerHTML = `ギュウ<span class="heartOnly">❤</span>`;
+}
+function setTextWithHeart(text){
+  speechEl.className = "";
+  speechEl.innerHTML = `${text}<span class="heartOnly">❤</span>`;
+}
+
+/* gauge */
+function stopCheeTimer(){ cancelAnimationFrame(rafId); rafId=0; }
+function hideGauge(){
+  gaugeWrap.classList.remove("show");
+  gaugeBar.style.transform="scaleX(0)";
+}
+function showGauge(){ gaugeWrap.classList.add("show"); }
+function resetCheeVisuals(){
+  gameScreen.classList.remove("chee","cut","announce","hold","stage3plus","result");
+  hideGauge();
+  stopCheeTimer();
+  gaugeBar.classList.remove("yellow","red");
+  currentCheeLevel=null;
+  choicesEl.classList.remove("chee10");
+}
+
+/* choices */
+function buildChoices4(){
+  choicesEl.classList.remove("chee10");
+  choicesEl.innerHTML="";
+  const items=[["はい"],["いいえ"],["チー"],["ギュウ"]];
+  shuffle(items).forEach(([t])=>{
+    const b=document.createElement("button");
+    b.textContent=t;
+    b.className="choice";
+    b.onclick=()=>answer(t);
+    choicesEl.appendChild(b);
+  });
+  applyRandomColorsToButtons();
+}
+function buildChoicesChee10(){
+  const decoys = [
+    "はい","いいえ","チー","ポン","カン","ドン","モー","牛","チーズ","特盛り",
+    "並","大盛り","湯気","ニコッ","クスッ","笑","うし","ぎゅ","チー牛","牛丼"
   ];
+  const nine = shuffle(decoys.filter(x=>x!=="ギュウ")).slice(0, 9);
+  let labels = ["ギュウ", ...nine];
 
-  /* ===== Unlock rules =====
-     - オールスター: debug=1 で擬似解放
-     - それ以外は localStorage を「購入済み」として扱う（課金想定）
-  */
-  function isAllStarUnlocked(){
-    if(DEBUG) return true;
-    return localStorage.getItem(LS.ALLSTAR) === "1";
-  }
-  function setAllStarUnlocked(v){
-    localStorage.setItem(LS.ALLSTAR, v ? "1" : "0");
-  }
-
-  /* ===== Star (チギュテッド閲覧済み) ===== */
-  function getStarSeen(girlId){
-    return localStorage.getItem(LS.STAR_PREFIX + girlId) === "1";
-  }
-  function setStarSeen(girlId, v){
-    localStorage.setItem(LS.STAR_PREFIX + girlId, v ? "1" : "0");
-  }
-  function resetAllStars(){
-    girls.forEach(g => localStorage.removeItem(LS.STAR_PREFIX + g.id));
-  }
-
-  /* ===== Select screen UI ===== */
-  const selectHeroImg = $("#selectHeroImg");
-  const selectBubble  = $("#selectBubble");
-  const girlListEl    = $("#girlList");
-  const startBtn      = $("#startBtn");
-  const toggleAllStarBtn = $("#toggleAllStarBtn");
-  const modeBadge     = $("#modeBadge");
-  const debugBadge    = $("#debugBadge");
-  const resetStarBtn  = $("#resetStarBtn");
-
-  let selectedGirl = girls[0];
-  let allStarMode = false;
-
-  function refreshSelectHeader(){
-    selectHeroImg.src = selectedGirl.top;
-    const star = getStarSeen(selectedGirl.id) ? "★" : "";
-    selectBubble.textContent = `${selectedGirl.label} を選択中 ${star ? "（" + star + "チギュテッド閲覧済み）" : ""}`;
-  }
-
-  function refreshModeBadge(){
-    const unlocked = isAllStarUnlocked();
-    if(allStarMode){
-      modeBadge.innerHTML = `<strong>オールスター</strong>`;
-    }else{
-      modeBadge.innerHTML = `<strong>通常</strong>`;
+  for(let k=0;k<10;k++){
+    labels = shuffle(labels);
+    const idx = labels.indexOf("ギュウ");
+    if(idx !== lastGyuuIndex){
+      lastGyuuIndex = idx;
+      break;
     }
-
-    if(DEBUG){
-      debugBadge.textContent = "debug=1";
-    }else{
-      debugBadge.textContent = "";
-    }
-
-    // ボタン表示
-    const label = unlocked
-      ? (allStarMode ? "オールスターON（タップでOFF）" : "オールスターOFF（タップでON）")
-      : "オールスターモード（課金）";
-    toggleAllStarBtn.textContent = label;
   }
 
-  function buildGirlList(){
-    girlListEl.innerHTML = "";
-    const unlockedAllStar = isAllStarUnlocked();
+  choicesEl.classList.add("chee10");
+  choicesEl.innerHTML="";
+  labels.forEach(label=>{
+    const b=document.createElement("button");
+    b.textContent = label;
+    b.className="choice";
+    b.onclick=()=>answer(label);
+    choicesEl.appendChild(b);
+  });
+  applyRandomColorsToButtons();
+}
 
-    girls.forEach(g => {
-      // 通常は「選択」は可能（今後追加前提）
-      // オールスターが未解放の場合、B/Cは「登場しない」扱いとしてロック表示（ただし将来追加のため選択はできる）
-      const lockedInNormal = (!unlockedAllStar && g.id !== "A");
+/* screens */
+function showOnly(screen){
+  [topScreen,girlScreen,modeScreen,gameScreen].forEach(s=>s.classList.add("hide"));
+  screen.classList.remove("hide");
+}
+function goTop(){
+  stopCheeTimer();
+  resetCheeVisuals();
+  mode="quiz";
+  ended=false;
+  locked=false;
+  cheeCooldown=false;
 
-      const item = document.createElement("div");
-      item.className = "girlItem" + (lockedInNormal ? " lock" : "");
-      item.onclick = () => {
-        selectedGirl = g;
-        refreshSelectHeader();
-        // クイズ中もエンディングは選択中固定
-      };
+  counterEl.textContent="-";
+  refreshBestLine();
+  showOnly(topScreen);
+}
+function goGirlSelect(){
+  refreshBestLine();
+  renderGirlGrid();
 
-      const thumb = document.createElement("div");
-      thumb.className = "girlThumb";
-      const img = document.createElement("img");
-      img.src = g.top;
-      img.alt = g.label;
-      thumb.appendChild(img);
-
-      const info = document.createElement("div");
-      info.className = "girlInfo";
-
-      const name = document.createElement("div");
-      name.className = "girlName";
-      const star = getStarSeen(g.id) ? `<span class="star">★</span>` : "";
-      name.innerHTML = `${g.label} ${star}`;
-
-      const desc = document.createElement("div");
-      desc.className = "girlDesc";
-      desc.textContent = lockedInNormal
-        ? "（通常では未登場）オールスター解放でランダム登場"
-        : "選択するとエンディングはこの子で固定";
-
-      const tagRow = document.createElement("div");
-      tagRow.className = "tagRow";
-      const t1 = document.createElement("div");
-      t1.className = "tag";
-      t1.textContent = "縦スクロール対応";
-      const t2 = document.createElement("div");
-      t2.className = "tag";
-      t2.textContent = lockedInNormal ? "LOCK" : "OK";
-      tagRow.appendChild(t1);
-      tagRow.appendChild(t2);
-
-      info.appendChild(name);
-      info.appendChild(desc);
-      info.appendChild(tagRow);
-
-      item.appendChild(thumb);
-      item.appendChild(info);
-      girlListEl.appendChild(item);
-    });
+  if(previewBgKey){
+    setGirlSelectPreviewBg(previewBgKey);
+  }else{
+    setGirlAndModeBgToSelectedTop();
   }
+  showOnly(girlScreen);
+}
+function goModeSelect(){
+  refreshBestLine();
+  setGirlAndModeBgToSelectedTop();
+  showOnly(modeScreen);
+}
 
-  toggleAllStarBtn.onclick = () => {
-    const unlocked = isAllStarUnlocked();
-    if(!unlocked){
-      // 課金想定：ここでは案内だけ。debug=1なら擬似解放も可能
-      if(DEBUG){
-        openModal({
-          title: "オールスター（debug擬似解放）",
-          body: "debug=1 のため、擬似解放できます。\n解放しますか？",
-          buttons: [
-            { label:"解放する", kind:"ok", onClick: () => { setAllStarUnlocked(true); closeModal(true); syncSelectUI(); } },
-            { label:"やめる", kind:"ghost", onClick: () => closeModal(true) },
-          ],
-          lockClose:false
-        });
-      }else{
-        openModal({
-          title: "オールスター（課金想定）",
-          body: "未解放です。\n（実課金導線は後で実装）\n\n※テストする場合：URL末尾に ?debug=1 を付けてください。",
-          buttons: [
-            { label:"OK", kind:"ok", onClick: () => closeModal(true) }
-          ],
-          lockClose:false
-        });
-      }
-      return;
-    }
-    allStarMode = !allStarMode;
-    syncSelectUI();
-  };
+/* girl select handlers */
+function attachPreviewHandlers(tile, g){
+  tile.addEventListener("pointerdown", ()=>{ setGirlSelectPreviewBg(g.key); }, {passive:true});
+  tile.addEventListener("pointerenter", ()=>{ setGirlSelectPreviewBg(g.key); }, {passive:true});
+}
+function renderGirlGrid(){
+  girlGrid.innerHTML = "";
+  GIRLS.forEach(g=>{
+    const tile = document.createElement("button");
+    tile.className = "girlTile"
+      + (g.key===selectedGirlKey ? " active" : "")
+      + (g.locked ? " locked" : "");
+    tile.type = "button";
 
-  resetStarBtn.onclick = () => {
-    openModal({
-      title: "星リセット",
-      body: "全員の「チギュテッド閲覧済み（★）」をリセットします。\nよろしい？",
-      buttons: [
-        { label:"リセット", kind:"warn", onClick: () => { resetAllStars(); closeModal(true); syncSelectUI(); } },
-        { label:"やめる", kind:"ghost", onClick: () => closeModal(true) },
-      ],
-      lockClose:false
-    });
-  };
+    attachPreviewHandlers(tile, g);
 
-  function syncSelectUI(){
-    buildGirlList();
-    refreshSelectHeader();
-    refreshModeBadge();
-  }
-
-  /* ===== Quiz data ===== */
-  // Q1/Q25 固定。中23問は差し替え前提（ここは“完全版index.html”として枠を実装）
-  const Q1  = "あなたはチー牛ですか？";
-  const Q25 = "最後にひとこと。チーと言えば？";
-
-  // ここをあなたの正式23問に置き換えればOK
-  const MID_23 = [
-    "チーズ牛丼を本当は食べたいですか？",
-    "「チー牛食おうぜ！」と言われたら嬉しい？",
-    "他人を見て一瞬だけチー牛かもと思ったことはありますか？",
-    "今日は『やってる感』だけ出せましたか？",
-    "「行けたら行くよ」を実行したことはありますか？",
-    "牛丼屋でメニューを見るフリをしますか？",
-    "イヤホンをしてると強くなった気がしますか？",
-    "深夜に急に自己肯定感が上がることがありますか？",
-    "『検討はした』と言ったことはありますか？",
-    "『今じゃない』で回避したことはありますか？",
-    "『永久に保留で』と言いたくなりますか？",
-    "好きな言葉は『動かざること山の如く』ですか？",
-    "会話の最適解をあとで思い出しますか？",
-    "ラーメンの替え玉より、言い訳の替え玉が得意ですか？",
-    "自分の評価は自分で決めたいですか？",
-    "ネットで調べた知識を現場で活かせたことはありますか？",
-    "褒められると一回否定してから受け取りますか？",
-    "『とりあえず』を多用しますか？",
-    "『案をね』と言いがちですか？",
-    "自分のことを客観視しすぎて疲れますか？",
-    "何もしてないのに忙しい日がありますか？",
-    "アイコンを変えるだけで人生変わる気がしますか？",
-    "最後に『ギュウ』と言って終わりたいですか？",
-  ];
-
-  // 25問を構築（Q1 + shuffle(MID23) + Q25）
-  function shuffle(arr){
-    const a = arr.slice();
-    for(let i=a.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [a[i],a[j]]=[a[j],a[i]];
-    }
-    return a;
-  }
-
-  let questions = []; // length=25
-
-  /* ===== Chi-girl invasion schedule =====
-     - 最低3回保証（Lv1→Lv2→Lv3必ず体験）
-     - Q2〜Q24の範囲に出す
-     - 演出は必ず見える（一定時間後に続けるが出る）
-  */
-  function makeChiSchedule(){
-    // 対象は Q2..Q24 => index 1..23 (0-based)
-    const candidates = [];
-    for(let i=1;i<=23;i++) candidates.push(i);
-
-    // 3箇所を重複なしで選ぶ
-    const picks = [];
-    while(picks.length<3){
-      const idx = Math.floor(Math.random()*candidates.length);
-      picks.push(candidates[idx]);
-      candidates.splice(idx,1);
-    }
-    picks.sort((a,b)=>a-b);
-
-    const schedule = new Map();
-    schedule.set(picks[0], 1);
-    schedule.set(picks[1], 2);
-    schedule.set(picks[2], 3);
-
-    return schedule;
-  }
-
-  /* ===== Scoring (最低限：答えの回数差ベース + 例外点) =====
-     ※今回の「確定仕様」に採点が明記されてないため、
-       “ゲームとして成立する最小”を実装（後で差し替え可能）
-     - 2%でチギュテッド(100%) -> 星を保存
-  */
-  function computeScore(counts){
-    // counts: {yes,no,chi,gyu}
-    const arr = [counts.yes, counts.no, counts.chi, counts.gyu];
-    const max = Math.max(...arr);
-    const min = Math.min(...arr);
-    const diff = max - min; // 小さいほどチー牛度が高い、という方針（過去仕様に合わせる）
-    // 基本スコア（ざっくり）：diff 0..25 -> 100..0
-    let pct = Math.round(100 - (diff/25)*100);
-
-    // 例外（過去メモの値を採用）
-    const total = arr.reduce((s,x)=>s+x,0);
-    const key = `${counts.yes},${counts.no},${counts.chi},${counts.gyu}`;
-    const exceptions = new Map([
-      // 25問版なので、以下は“方向性”として近似で入れる（ズレても動くようにする）
-      // すべて同一選択になった時の固定値（25問）
-      ["25,0,0,0", 48],
-      ["0,25,0,0", 42],
-      ["0,0,25,0", 57],
-      ["0,0,0,25", 53],
-    ]);
-    if(exceptions.has(key)) pct = exceptions.get(key);
-
-    // ランク
-    let rank = "D";
-    if(pct>=90) rank="S";
-    else if(pct>=75) rank="A";
-    else if(pct>=60) rank="B";
-    else if(pct>=45) rank="C";
-
-    return { pct, rank, diff, total };
-  }
-
-  /* ===== Quiz runtime ===== */
-  const bubble = $("#bubble");
-  const girlImg = $("#girlImg");
-  const qCounter = $("#qCounter");
-  const qText = $("#qText");
-  const stagePill = $("#stagePill");
-  const choicesEl = $("#choices");
-  const toTopBtn = $("#toTopBtn");
-  const allStarPill = $("#allStarPill");
-
-  const resultImg = $("#resultImg");
-  const resultBubble = $("#resultBubble");
-  const resultText = $("#resultText");
-  const resultDetail = $("#resultDetail");
-  const rankPill = $("#rankPill");
-  const countsPill = $("#countsPill");
-  const retryBtn = $("#retryBtn");
-  const topBtn2 = $("#topBtn2");
-  const starHint = $("#starHint");
-
-  // 状態
-  let qi = 0; // 0..24
-  let stage = 1;
-  let chiSchedule = new Map();
-  let canAnswer = true;
-
-  // 回答カウント
-  const counts = { yes:0, no:0, chi:0, gyu:0 };
-
-  // クイズ中の「登場キャラのみランダム」
-  // - allStarMode && allStarUnlocked の場合、回答後にランダムで女の子が“登場”として切替
-  function getActivePool(){
-    // 通常：選択中のみ
-    // オールスター：A/B/C（将来追加も含めここを拡張）
-    if(allStarMode && isAllStarUnlocked()){
-      return girls.slice();
-    }
-    return [selectedGirl];
-  }
-  function maybeSwapGirlDuringQuiz(){
-    if(!(allStarMode && isAllStarUnlocked())) return;
-    const pool = getActivePool();
-    const pick = pool[Math.floor(Math.random()*pool.length)];
-    girlImg.src = pick.normal;
-  }
-
-  function setQuizGirlToSelected(){
-    girlImg.src = selectedGirl.normal;
-  }
-
-  /* ===== Choices ===== */
-  const CHOICES = ["はい","いいえ","チー","ギュウ"];
-
-  function renderChoices(){
-    choicesEl.innerHTML = "";
-    CHOICES.forEach((label) => {
-      const b = document.createElement("div");
-      b.className = "btn";
-      b.textContent = label;
-      b.onclick = () => onAnswer(label);
-      choicesEl.appendChild(b);
-    });
-  }
-
-  function updateQuestionUI(){
-    qCounter.textContent = `Q${qi+1} / 25`;
-    stagePill.textContent = `stage ${stage}`;
-    qText.textContent = questions[qi];
-    bubble.textContent = "……";
-    renderChoices();
-
-    // Q1 / Q25 は固定仕様（表示上も明確にしておく）
-    if(qi === 0) bubble.textContent = "最初の質問だよ。";
-    if(qi === 24) bubble.textContent = "最後は決めて。";
-  }
-
-  function incCount(answer){
-    if(answer==="はい") counts.yes++;
-    else if(answer==="いいえ") counts.no++;
-    else if(answer==="チー") counts.chi++;
-    else if(answer==="ギュウ") counts.gyu++;
-  }
-
-  /* ===== チー娘演出 =====
-     - 暗幕なし
-     - 必ず見える（lockClose=true、一定時間後に続けるが出る）
-  */
-  function showChiGirl(level, after){
-    canAnswer = false;
-
-    // 乱入時はチー娘画像へ（ファイル名は仕様に合わせている）
-    // あなたの実ファイル名に合わせてここだけ調整OK
-    const chiImg = `chi_girl_lv${level}.png`;
-    const prevSrc = girlImg.src;
-
-    // 画像切替
-    girlImg.src = chiImg;
-    bubble.textContent = `チー娘 Lv${level} 乱入！！！`;
-
-    // 演出は必ず見える：最初は閉じられない
-    openModal({
-      title: `チー娘 Lv${level}`,
-      body: `乱入演出（必ず表示）\n\nLv${level} を体験しました。`,
-      buttons: [],
-      lockClose: true
-    });
-
-    // 一定時間後に「続ける」ボタンを出す（ここで初めて進める）
-    setTimeout(() => {
-      modalButtons.innerHTML = "";
-      const cont = document.createElement("div");
-      cont.className = "btn small ok";
-      cont.textContent = "続ける";
-      cont.onclick = () => {
-        closeModal(true);
-        // 元の女の子に戻す（ただしオールスター中は“登場ランダム”に任せる）
-        if(allStarMode && isAllStarUnlocked()){
-          maybeSwapGirlDuringQuiz();
-        }else{
-          setQuizGirlToSelected();
-        }
-        canAnswer = true;
-        after && after();
-      };
-      modalButtons.appendChild(cont);
-      modalLocked = false; // 続けるが出たら閉じられる（ただし"続ける"推奨）
-    }, 950);
-  }
-
-  /* ===== Answer flow ===== */
-  function onAnswer(label){
-    if(!canAnswer) return;
-
-    // カウント
-    incCount(label);
-
-    // リアクション（簡易）
-    if(label==="ギュウ") bubble.textContent = "ギュウ";
-    else if(label==="チー") bubble.textContent = "……";
-    else bubble.textContent = "うん";
-
-    // Q25は“最後にひとこと。チーと言えば？”（固定）
-    // → ここでエンディングへ
-    const isLast = (qi === 24);
-
-    // 乱入判定：Q2〜Q24の範囲（qi 1..23）でスケジュールがある場合
-    const scheduledLv = chiSchedule.get(qi);
-
-    // 先に次へ行く関数
-    const goNext = () => {
-      if(isLast){
-        finishQuiz();
-        return;
-      }
-      qi++;
-      stage++;
-      // オールスター中は女の子“登場ランダム”（ただしエンディングは選択中固定）
-      if(allStarMode && isAllStarUnlocked()){
-        maybeSwapGirlDuringQuiz();
-      }else{
-        setQuizGirlToSelected();
-      }
-      updateQuestionUI();
+    tile.onclick = ()=>{
+      if(g.locked) return;
+      selectedGirlKey = g.key;
+      saveGirl(g.key);
+      setGirlAndModeBgToSelectedTop();
+      renderGirlGrid();
     };
 
-    // 乱入がある場合：必ず演出を見せてから進む
-    if(scheduledLv && qi >= 1 && qi <= 23){
-      showChiGirl(scheduledLv, goNext);
+    tile.innerHTML = `
+      <div class="iconBox">
+        <img src="${g.icon}" alt="${g.name}" onerror="this.style.display='none'">
+      </div>
+      <div class="girlName">${g.name}</div>
+      ${g.locked ? `<div class="lockBadge">LOCK</div>` : ``}
+    `;
+    girlGrid.appendChild(tile);
+  });
+}
+
+/* game bg */
+function applyGameQuestionBg(){
+  const g = getSelectedGirl();
+  gameBg.style.backgroundImage = `url("${g.normal[i % g.normal.length]}")`;
+}
+
+/* question */
+function showQuestion(){
+  ended=false;
+  locked=false;
+  mode="quiz";
+
+  gameScreen.classList.remove("result");
+  resultBox.classList.add("hide");
+
+  resetCheeVisuals();
+  applyGameQuestionBg();
+
+  qEl.classList.add("hide");
+  qEl.textContent = questions[i].text;
+  clearSpeech();
+
+  counterEl.textContent = `${i+1}/${questions.length}`;
+  setTimeout(()=> qEl.classList.remove("hide"), QUESTION_SHOW_DELAY);
+
+  if(gameMode==="cheeOnly") buildChoicesChee10();
+  else buildChoices4();
+
+  setButtonsEnabled(true);
+}
+
+/* chee levels */
+function pickCheeLevelNormal(){
+  const r = Math.random();
+  let acc = 0;
+  for(const lv of cheeLevelsNormal){
+    acc += lv.weight;
+    if(r <= acc) return lv;
+  }
+  return cheeLevelsNormal[0];
+}
+function cheeOnlyPickStage(){
+  let stage = cheeStage;
+  if(Math.random() < 0.25){
+    stage = Math.max(1, stage - (Math.random()<0.7 ? 1 : 2));
+  }
+  const stars = stage <= 1 ? 1 : (stage === 2 ? 2 : 3);
+  const base = 2400 - (stage - 1) * 120;
+  const timeMs = Math.max(550, Math.round(base));
+  const gaugeType = stars === 1 ? "cool" : (stars === 2 ? "yellow" : "red");
+  return { stars, timeMs, gauge:gaugeType, stage };
+}
+
+/* chee spawn */
+function maybeChee(){
+  if(ended) return;
+
+  if(i >= questions.length-1){
+    endResult();
+    return;
+  }
+
+  if(!cheeCooldown && Math.random() < CHEE_RATE){
+    cheeCooldown=true;
+    setButtonsEnabled(false);
+    gameScreen.classList.add("hold");
+    setTimeout(()=>{
+      gameScreen.classList.remove("hold");
+      startCheeBattle(pickCheeLevelNormal());
+    }, CHEE_PRE_HOLD_MS);
+  }else{
+    cheeCooldown=false;
+    i++;
+    if(i < questions.length) showQuestion();
+    else endResult();
+  }
+}
+
+function startCheeBattle(level){
+  if(ended) return;
+
+  mode="chee";
+  locked=false;
+  currentCheeLevel = level;
+
+  gameScreen.classList.add("cut","announce","chee");
+  if(level.stars >= 3) gameScreen.classList.add("stage3plus");
+
+  const g = getSelectedGirl();
+  gameBg.style.backgroundImage = `url("${pick(g.normal)}")`;
+
+  setTimeout(()=>{
+    setTimeout(()=>{
+      gameScreen.classList.remove("cut","announce");
+
+      qEl.textContent="";
+      qEl.classList.add("hide");
+      clearSpeech();
+
+      setTimeout(()=>{
+        speechEl.className = "cheeWord" + (level.stars>=3 ? " big" : "");
+        speechEl.textContent = "チー！";
+
+        if(gameMode === "cheeOnly") buildChoicesChee10();
+        else buildChoices4();
+
+        startCheeTimer(level);
+        setButtonsEnabled(true);
+      }, CHEE_SILENCE_MS);
+
+    }, POST_CUT_HOLD_MS);
+  }, CUT_MS + ANNOUNCE_EXTRA_MS);
+}
+
+function startCheeTimer(level){
+  stopCheeTimer();
+  showGauge();
+
+  gaugeBar.classList.remove("yellow","red");
+  if(level.gauge === "yellow") gaugeBar.classList.add("yellow");
+  if(level.gauge === "red") gaugeBar.classList.add("red");
+
+  const start=performance.now();
+
+  const tick=(t)=>{
+    let elapsed = t - start;
+
+    if(level.stars >= 3 && elapsed < STAGE3_BOOST_MS){
+      elapsed = elapsed * STAGE3_BOOST_MULT;
+    }else if(level.stars >= 3 && elapsed >= STAGE3_BOOST_MS){
+      const boosted = STAGE3_BOOST_MS * STAGE3_BOOST_MULT;
+      elapsed = boosted + (elapsed - STAGE3_BOOST_MS);
+    }
+
+    const r = Math.max(0, 1 - (elapsed / level.timeMs));
+    gaugeBar.style.transform = `scaleX(${r})`;
+
+    if(level.gauge === "cool"){
+      gaugeBar.style.background = `hsl(${210 * r}, 85%, 55%)`;
+    }
+
+    if(r > 0){
+      rafId = requestAnimationFrame(tick);
+    }else{
+      gameOver(true);
+    }
+  };
+
+  rafId = requestAnimationFrame(tick);
+}
+
+function nextCheeOnlyAfterWin(){
+  cheeStage++;
+  counterEl.textContent = `ステージ${cheeStage}`;
+
+  const best = getBestStage();
+  if(cheeStage > best){
+    setBestStage(cheeStage);
+    isNewRecordRun = true;
+  }
+
+  const lv = cheeOnlyPickStage();
+  startCheeBattle(lv);
+}
+
+/* answer */
+function answer(t){
+  if(locked || ended) return;
+  locked=true;
+  setButtonsEnabled(false);
+
+  ensureAudio();
+  qEl.classList.add("hide");
+
+  if(mode==="chee"){
+    if(t==="ギュウ"){
+      stopCheeTimer();
+      hideGauge();
+
+      setTimeout(()=> setHeartOnlyPop(isNewRecordRun), GIRL_REPLY_DELAY_MS);
+
+      setTimeout(()=>{
+        resetCheeVisuals();
+
+        if(gameMode === "cheeOnly"){
+          nextCheeOnlyAfterWin();
+          return;
+        }
+
+        i++;
+        if(i < questions.length) showQuestion();
+        else endResult();
+      }, GIRL_REPLY_DELAY_MS + CHEE_SUCCESS_HOLD_MS);
+
+    }else{
+      gameOver(true);
+    }
+    return;
+  }
+
+  const isLast = (i === 44);
+
+  setTimeout(()=>{
+    if(t==="はい")        setTextWithHeart("笑");
+    else if(t==="いいえ") setTextWithHeart("クスッ");
+    else if(t==="ギュウ") setTextWithHeart("ニコッ");
+    else if(t==="チー")   setGyuuWithHeart();
+    else                  setTextWithHeart("笑");
+  }, GIRL_REPLY_DELAY_MS);
+
+  setTimeout(()=>{
+    if(isLast){
+      if(t !== "ギュウ"){
+        gameOver(false);
+        return;
+      }
+      endResult();
       return;
     }
+    maybeChee();
+  }, GIRL_REPLY_DELAY_MS + NORMAL_REACT_MS);
+}
 
-    // 乱入以外：普通に進む
-    setTimeout(goNext, 140);
-  }
+/* end buttons */
+function renderEndButtonsDelayed(delayMs){
+  choicesEl.innerHTML = "";
+  setTimeout(()=>{
+    choicesEl.innerHTML = `
+      <button class="choice" style="grid-column:1/-1" onclick="restart(gameMode)">もう一回</button>
+      <button class="choice" style="grid-column:1/-1" onclick="goTop()">トップに戻る</button>
+    `;
+    applyRandomColorsToButtons();
+  }, delayMs);
+}
 
-  /* ===== Finish / Result ===== */
-  function finishQuiz(){
-    // エンディングは選択中の女の子固定
-    //（オールスターでクイズ中に切替していてもここで固定に戻す）
-    const endGirl = selectedGirl;
+/* result */
+function animatePercent(to){
+  const dur = 900;
+  const start = performance.now();
+  const from = 0;
 
-    // 2% チギュテッド
-    const chigyuted = Math.random() < 0.02;
+  const tick = (t)=>{
+    const p = Math.min(1, (t-start)/dur);
+    const eased = 1 - Math.pow(1-p, 3);
+    const v = Math.round(from + (to-from)*eased);
 
-    // 基本スコア
-    let { pct, rank, diff } = computeScore(counts);
-
-    if(chigyuted){
-      pct = 100;
-      rank = "S";
-      setStarSeen(endGirl.id, true); // ★＝閲覧済み
-    }
-
-    // 画像
-    resultImg.src = chigyuted ? `${endGirl.key}_score_s_01.png` : `${endGirl.key}_clear_01.png`;
-
-    // テキスト
-    if(chigyuted){
-      resultBubble.textContent = "チー牛ギフテッド（チギュテッド）";
-      resultText.textContent = `チー牛度：${pct}%`;
-      rankPill.textContent = "S（チギュテッド）";
-      starHint.textContent = `★ ${endGirl.label} のチギュテッド閲覧済み`;
+    if(v >= 100){
+      resultPct.innerHTML = `100<small>%</small>`;
     }else{
-      resultBubble.textContent = "ギュウ";
-      resultText.textContent = `チー牛度：${pct}%`;
-      rankPill.textContent = `${rank}`;
-      starHint.textContent = getStarSeen(endGirl.id) ? `★ ${endGirl.label} のチギュテッド閲覧済み` : "—";
+      resultPct.innerHTML = `${v}<small>%</small>`;
     }
 
-    countsPill.textContent = `はい${counts.yes} / いいえ${counts.no} / チー${counts.chi} / ギュウ${counts.gyu}`;
-    resultDetail.textContent =
-`diff（最大-最小）: ${diff}
-選択回数:
-- はい: ${counts.yes}
-- いいえ: ${counts.no}
-- チー: ${counts.chi}
-- ギュウ: ${counts.gyu}
-
-※星(★)は「その女の子のチギュテッドエンディング閲覧済み」`;
-
-    showScreen(screenResult);
-  }
-
-  retryBtn.onclick = () => {
-    startGame(); // 同じ選択中の女の子で再スタート
+    if(p < 1) requestAnimationFrame(tick);
   };
-  topBtn2.onclick = () => {
-    showScreen(screenSelect);
-    syncSelectUI();
-  };
+  requestAnimationFrame(tick);
+}
 
-  toTopBtn.onclick = () => {
-    openModal({
-      title: "トップに戻る",
-      body: "今の進行はリセットされます。\n戻りますか？",
-      buttons: [
-        { label:"戻る", kind:"warn", onClick: () => { closeModal(true); showScreen(screenSelect); syncSelectUI(); } },
-        { label:"続ける", kind:"ghost", onClick: () => closeModal(true) },
-      ],
-      lockClose:false
-    });
-  };
+function endResult(){
+  ended=true;
+  mode="result";
+  resetCheeVisuals();
 
-  /* ===== Start game ===== */
-  function buildQuestions(){
-    const mid = shuffle(MID_23).slice(0,23);
-    return [Q1, ...mid, Q25];
+  gameScreen.classList.add("result");
+  resultBox.classList.remove("hide");
+
+  const g = getSelectedGirl();
+
+  const score = rollScore();
+  const rank = rankFromScore(score);
+
+  let img = g.top;
+  if(rank==="gifted") img = pick(g.score.s);
+  else if(rank==="s") img = pick(g.score.s);
+  else if(rank==="a") img = pick(g.score.a);
+  else img = pick(g.score.b);
+
+  gameBg.style.backgroundImage = `url("${img}")`;
+
+  qEl.textContent="";
+  clearSpeech();
+  counterEl.textContent = "RESULT";
+
+  resultPct.innerHTML = `0<small>%</small>`;
+  animatePercent(score);
+
+  if(rank==="gifted"){
+    setTimeout(()=> setSpeechPlain("……君、チギュテッドだね。"), 520);
   }
 
-  function resetQuizState(){
-    qi = 0;
-    stage = 1;
-    counts.yes = counts.no = counts.chi = counts.gyu = 0;
-    chiSchedule = makeChiSchedule();
-    canAnswer = true;
+  renderEndButtonsDelayed(0);
+}
 
-    // 表示（エンディング固定のため）
-    setQuizGirlToSelected();
+/* game over */
+function gameOver(isCheeBattle){
+  ended=true;
+  resetCheeVisuals();
+
+  gameScreen.classList.remove("result");
+  resultBox.classList.add("hide");
+
+  const g = getSelectedGirl();
+
+  if(gameMode === "cheeOnly"){
+    const reachedStage = cheeStage;
+    const bestStage = getBestStage();
+
+    if(reachedStage > bestStage){
+      setBestStage(reachedStage);
+      isNewRecordRun = true;
+    }
+
+    gameBg.style.backgroundImage = `url("${g.chiGameover}")`;
+    clearSpeech();
+    setSpeechPlain(g.chiOverText);
+
+    counterEl.textContent = `GAME OVER（ステージ${reachedStage}）`;
+
+    renderEndButtonsDelayed(1000);
+    return;
   }
 
-  function startGame(){
-    // オールスターpill
-    allStarPill.textContent = (allStarMode && isAllStarUnlocked()) ? "オールスター" : "通常";
-    // 質問生成
-    questions = buildQuestions();
+  gameBg.style.backgroundImage = `url("${g.gameover}")`;
+  clearSpeech();
+  setSpeechPlain("あなたチー牛じゃなかったのね。。");
+  counterEl.textContent = "GAME OVER";
 
-    resetQuizState();
-    updateQuestionUI();
+  renderEndButtonsDelayed(1000);
+}
 
-    // オールスター時：最初から登場ランダムにしても良い（ただしQ1は選択中の子で開始して安心感）
-    // → Q1は選択中固定で始める（仕様に抵触しない）
-    showScreen(screenQuiz);
+/* restart */
+function restart(modeName){
+  ended=false;
+  cheeCooldown=false;
+  mode="quiz";
+  locked=false;
+  stopCheeTimer();
+  resetCheeVisuals();
+
+  gameMode = modeName || "quiz";
+  isNewRecordRun = false;
+
+  gameScreen.classList.remove("result");
+  resultBox.classList.add("hide");
+
+  showOnly(gameScreen);
+
+  if(gameMode === "cheeOnly"){
+    cheeStage = 1;
+    lastGyuuIndex = -1;
+    counterEl.textContent = `ステージ${cheeStage}`;
+    startCheeBattle(cheeOnlyPickStage());
+  }else{
+    i=0;
+    showQuestion();
   }
+}
 
-  startBtn.onclick = () => {
-    // オールスター未解放なら allStarMode を強制OFF
-    if(allStarMode && !isAllStarUnlocked()) allStarMode = false;
-    startGame();
-  };
+/* init */
+document.getElementById("btnGoGirl").onclick = ()=>{ goGirlSelect(); };
+document.getElementById("btnGirlBack").onclick = ()=>{ goTop(); };
+document.getElementById("btnGoMode").onclick = ()=>{ goModeSelect(); };
+document.getElementById("btnModeBack").onclick = ()=>{ goGirlSelect(); };
 
-  /* ===== Init ===== */
-  function init(){
-    // 初期：オールスターが解放されてるなら前回のON/OFFを引き継いでもいいが、
-    // 今回は「誤操作防止」で常にOFF開始（必要ならここを保存に変更可）
-    allStarMode = false;
+document.getElementById("btnStartQuiz").onclick = ()=>{ restart("quiz"); };
+document.getElementById("btnStartChee").onclick = ()=>{ restart("cheeOnly"); };
 
-    refreshSelectHeader();
-    syncSelectUI();
+function init(){
+  selectedGirlKey = getSavedGirl();
+  preloadTops();
+  refreshBestLine();
 
-    // heroは選択中の子
-    selectHeroImg.src = selectedGirl.top;
+  setGirlAndModeBgToSelectedTop();
 
-    // debug 表示
-    refreshModeBadge();
-  }
+  const pk = getPreviewKey();
+  if(pk) previewBgKey = pk;
 
-  init();
-})();
+  goTop();
+}
+init();
 </script>
 </body>
 </html>
