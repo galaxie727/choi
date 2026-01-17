@@ -596,21 +596,6 @@ const GIRLS = [
 
 let selectedGirlKey = getSavedGirl();
 
-/* ===== ALL STAR: 出演キャラ決定 =====
-   - isAllStar=false: 選択中の女の子固定
-   - isAllStar=true : unlockedGirls に入ってて locked=false の子からランダム
-*/
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function getGirlByKey(k){ return GIRLS.find(x=>x.key===k) || GIRLS[0]; }
-function getSelectedGirl(){ return getGirlByKey(selectedGirlKey); }
-
-function pickGirlForPlay(){
-  if(!isAllStar) return getSelectedGirl();
-  const keys = getUnlockedGirls();
-  const pool = keys.map(getGirlByKey).filter(g=>g && !g.locked);
-  return pool.length ? pick(pool) : getSelectedGirl();
-}
-
 /* 問題（45問） */
 const questions = [
   { text:"あなたはチー牛ですか？" },
@@ -1402,7 +1387,6 @@ document.getElementById("btnModeBack").onclick = ()=>{ goGirlSelect(); };
 
 document.getElementById("btnStartQuiz").onclick = ()=>{ isAllStar = false; restart("quiz"); };
 document.getElementById("btnStartChee").onclick = ()=>{ isAllStar = false; restart("cheeOnly"); };
-document.getElementById("btnStartAllStar").onclick = ()=>{ isAllStar=true; restart("quiz"); };
 
 document.getElementById("btnStartAllStar").onclick = ()=>{ 
   isAllStar = true;
