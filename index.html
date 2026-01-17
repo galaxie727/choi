@@ -497,10 +497,10 @@ header{
       <h1 class="titleBig">モードを選んでね</h1>
       <div class="subLine" id="bestLine">チー娘 BEST：ステージ0</div>
       <div class="modeBtns">
-        <button class="modeBtn" id="btnStartQuiz">チー牛診断</button>
-        <button class="modeBtn" id="btnStartChee">チー娘モード</button>
-        <button class="modeBtn" id="btnStartAllStar">⭐ オールスターモード</button>
-      </div>
+       <button class="modeBtn" id="btnStartQuiz">チー牛診断</button>
+　　　　 <button class="modeBtn" id="btnStartChee">チー娘モード</button>
+       <button class="modeBtn" id="btnStartAllStar">⭐ オールスターモード</button>
+　　　　</div>
       <button class="smallBack" id="btnModeBack">女の子選択に戻る</button>
     </div>
   </div>
@@ -743,6 +743,41 @@ let previewBgKey = getPreviewKey() || "";
 function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
 function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
+/* ===== ALL STAR ===== */
+let isAllStar = false;
+const UNLOCK_KEY = "unlockedGirls"; // 例: ["A","B","C"]
+
+function getUnlockedGirls(){
+  try{
+    const a = JSON.parse(localStorage.getItem(UNLOCK_KEY) || "[]");
+    return Array.isArray(a) && a.length ? a : ["A","B","C"];
+  }catch(e){ return ["A","B","C"]; }
+}
+
+// 連続を抑える「バッグ方式」
+let allStarBag = [];
+let allStarLastKey = "";
+
+function refillAllStarBag(){
+  allStarBag = shuffle(getUnlockedGirls());
+  // 直前と同じ子が先頭なら入れ替え（可能なときだけ）
+  if(allStarBag.length >= 2 && allStarBag[0] === allStarLastKey){
+    [allStarBag[0], allStarBag[1]] = [allStarBag[1], allStarBag[0]];
+  }
+}
+function nextAllStarKey(){
+  if(!allStarBag.length) refillAllStarBag();
+  const k = allStarBag.shift();
+  allStarLastKey = k;
+  return k;
+}
+
+function pickGirlForGame(){
+  if(!isAllStar) return getSelectedGirl();
+  const k = nextAllStarKey();
+  return getGirlByKey(k) || getSelectedGirl();
+}
+  
 /* ALL STAR用：演出中に固定する“出演キャラ” */
 let playGirl = null;
 function setPlayGirl(g){ playGirl = g; }
@@ -996,7 +1031,7 @@ function renderGirlGrid(){
 
 /* game bg（ALL STARは playGirl を使う） */
 function applyGameQuestionBg(){
-  const g = getPlayGirl();
+  const g = pickGirlForGame();
   gameBg.style.backgroundImage = `url("${g.normal[i % g.normal.length]}")`;
 }
 
@@ -1087,7 +1122,7 @@ function startCheeBattle(level){
   if(level.stars >= 3) gameScreen.classList.add("stage3plus");
 
   /* ★チー娘戦でも“同じ出演キャラ”を使う（見えない問題を防ぐ） */
-  const g = getPlayGirl();
+  const g = pickGirlForGame();
   gameBg.style.backgroundImage = `url("${pick(g.normal)}")`;
 
   setTimeout(()=>{
@@ -1365,10 +1400,17 @@ document.getElementById("btnGirlBack").onclick = ()=>{ goTop(); };
 document.getElementById("btnGoMode").onclick = ()=>{ goModeSelect(); };
 document.getElementById("btnModeBack").onclick = ()=>{ goGirlSelect(); };
 
-document.getElementById("btnStartQuiz").onclick = ()=>{ isAllStar=false; restart("quiz"); };
-document.getElementById("btnStartChee").onclick = ()=>{ isAllStar=false; restart("cheeOnly"); };
+document.getElementById("btnStartQuiz").onclick = ()=>{ isAllStar = false; restart("quiz"); };
+document.getElementById("btnStartChee").onclick = ()=>{ isAllStar = false; restart("cheeOnly"); };
 document.getElementById("btnStartAllStar").onclick = ()=>{ isAllStar=true; restart("quiz"); };
 
+document.getElementById("btnStartAllStar").onclick = ()=>{ 
+  isAllStar = true;
+  allStarBag = [];
+  allStarLastKey = "";
+  restart("quiz");
+};
+  
 function init(){
   selectedGirlKey = getSavedGirl();
   preloadTops();
