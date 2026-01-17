@@ -499,6 +499,7 @@ header{
       <div class="modeBtns">
         <button class="modeBtn" id="btnStartQuiz">チー牛診断</button>
         <button class="modeBtn" id="btnStartChee">チー娘モード</button>
+        <button class="modeBtn" id="btnStartAllStar">⭐ オールスターモード</button>
       </div>
       <button class="smallBack" id="btnModeBack">女の子選択に戻る</button>
     </div>
@@ -532,9 +533,27 @@ header{
 </div>
 
 <script>
+/* =========================
+   30.2 + ALL STAR (v3.0201)
+========================= */
+
 /* VERSION */
-const APP_VERSION = "v0.30.2";
+const APP_VERSION = "v3.0201";
 document.getElementById("versionVal").textContent = APP_VERSION;
+
+/* ===== ALL STAR =====
+   - unlockedGirls: localStorageに ["A","B","C"] のように保存
+   - ない場合はABCをデフォルト（安全）
+*/
+let isAllStar = false;
+const UNLOCK_KEY = "unlockedGirls"; // ["A","B","C"]
+
+function getUnlockedGirls(){
+  try{
+    const a = JSON.parse(localStorage.getItem(UNLOCK_KEY) || "[]");
+    return Array.isArray(a) && a.length ? a : ["A","B","C"];
+  }catch(e){ return ["A","B","C"]; }
+}
 
 /* 保存キー */
 const CHEE_RECORD_KEY = "cheeGirlBestStage";
@@ -576,6 +595,21 @@ const GIRLS = [
 ];
 
 let selectedGirlKey = getSavedGirl();
+
+/* ===== ALL STAR: 出演キャラ決定 =====
+   - isAllStar=false: 選択中の女の子固定
+   - isAllStar=true : unlockedGirls に入ってて locked=false の子からランダム
+*/
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function getGirlByKey(k){ return GIRLS.find(x=>x.key===k) || GIRLS[0]; }
+function getSelectedGirl(){ return getGirlByKey(selectedGirlKey); }
+
+function pickGirlForPlay(){
+  if(!isAllStar) return getSelectedGirl();
+  const keys = getUnlockedGirls();
+  const pool = keys.map(getGirlByKey).filter(g=>g && !g.locked);
+  return pool.length ? pick(pool) : getSelectedGirl();
+}
 
 /* 問題（45問） */
 const questions = [
@@ -706,12 +740,25 @@ let isNewRecordRun = false;
 let previewBgKey = getPreviewKey() || "";
 
 /* utils */
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
 function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
 
-function getGirlByKey(k){ return GIRLS.find(x=>x.key===k) || GIRLS[0]; }
-function getSelectedGirl(){ return getGirlByKey(selectedGirlKey); }
+/* ALL STAR用：演出中に固定する“出演キャラ” */
+let playGirl = null;
+function setPlayGirl(g){ playGirl = g; }
+function getPlayGirl(){ return playGirl || getSelectedGirl(); }
+
+/* ======== 重要：unlockedGirls 初期化（安全） ========
+   unlockedGirls が未設定の人のために、最初はABCを入れておく
+*/
+(function ensureUnlockedDefault(){
+  try{
+    const cur = localStorage.getItem(UNLOCK_KEY);
+    if(!cur){
+      localStorage.setItem(UNLOCK_KEY, JSON.stringify(["A","B","C"]));
+    }
+  }catch(e){}
+})();
 
 function refreshBestLine(){
   bestLine.textContent = `チー娘 BEST：ステージ${getBestStage()}`;
@@ -888,6 +935,8 @@ function goTop(){
   ended=false;
   locked=false;
   cheeCooldown=false;
+  isAllStar=false;     /* TOP戻りはOFFにしておく */
+  playGirl=null;
 
   counterEl.textContent="-";
   refreshBestLine();
@@ -945,9 +994,9 @@ function renderGirlGrid(){
   });
 }
 
-/* game bg */
+/* game bg（ALL STARは playGirl を使う） */
 function applyGameQuestionBg(){
-  const g = getSelectedGirl();
+  const g = getPlayGirl();
   gameBg.style.backgroundImage = `url("${g.normal[i % g.normal.length]}")`;
 }
 
@@ -961,6 +1010,10 @@ function showQuestion(){
   resultBox.classList.add("hide");
 
   resetCheeVisuals();
+
+  /* ★この問題での出演キャラを確定（オールスターなら毎問ランダム、通常なら選択固定） */
+  setPlayGirl(pickGirlForPlay());
+
   applyGameQuestionBg();
 
   qEl.classList.add("hide");
@@ -1033,7 +1086,8 @@ function startCheeBattle(level){
   gameScreen.classList.add("cut","announce","chee");
   if(level.stars >= 3) gameScreen.classList.add("stage3plus");
 
-  const g = getSelectedGirl();
+  /* ★チー娘戦でも“同じ出演キャラ”を使う（見えない問題を防ぐ） */
+  const g = getPlayGirl();
   gameBg.style.backgroundImage = `url("${pick(g.normal)}")`;
 
   setTimeout(()=>{
@@ -1180,7 +1234,7 @@ function renderEndButtonsDelayed(delayMs){
   }, delayMs);
 }
 
-/* result */
+/* result（RESULTは選択中の女の子固定） */
 function animatePercent(to){
   const dur = 900;
   const start = performance.now();
@@ -1210,6 +1264,7 @@ function endResult(){
   gameScreen.classList.add("result");
   resultBox.classList.remove("hide");
 
+  /* ★エンディングは選択中固定 */
   const g = getSelectedGirl();
 
   const score = rollScore();
@@ -1237,7 +1292,7 @@ function endResult(){
   renderEndButtonsDelayed(0);
 }
 
-/* game over */
+/* game over（ゲームオーバーも選択中固定） */
 function gameOver(isCheeBattle){
   ended=true;
   resetCheeVisuals();
@@ -1285,6 +1340,7 @@ function restart(modeName){
 
   gameMode = modeName || "quiz";
   isNewRecordRun = false;
+  playGirl = null;
 
   gameScreen.classList.remove("result");
   resultBox.classList.add("hide");
@@ -1292,6 +1348,7 @@ function restart(modeName){
   showOnly(gameScreen);
 
   if(gameMode === "cheeOnly"){
+    isAllStar = false; /* チー娘モードは別なのでOFF */
     cheeStage = 1;
     lastGyuuIndex = -1;
     counterEl.textContent = `ステージ${cheeStage}`;
@@ -1308,8 +1365,9 @@ document.getElementById("btnGirlBack").onclick = ()=>{ goTop(); };
 document.getElementById("btnGoMode").onclick = ()=>{ goModeSelect(); };
 document.getElementById("btnModeBack").onclick = ()=>{ goGirlSelect(); };
 
-document.getElementById("btnStartQuiz").onclick = ()=>{ restart("quiz"); };
-document.getElementById("btnStartChee").onclick = ()=>{ restart("cheeOnly"); };
+document.getElementById("btnStartQuiz").onclick = ()=>{ isAllStar=false; restart("quiz"); };
+document.getElementById("btnStartChee").onclick = ()=>{ isAllStar=false; restart("cheeOnly"); };
+document.getElementById("btnStartAllStar").onclick = ()=>{ isAllStar=true; restart("quiz"); };
 
 function init(){
   selectedGirlKey = getSavedGirl();
