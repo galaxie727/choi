@@ -647,48 +647,62 @@ let isNewRecordRun = false;
 
 let previewBgKey = getPreviewKey() || "";
 
-  /* =====================
-   ALL STAR（ONなら全部適用）
-===================== */
-const ALLSTAR_ENABLED_KEY = "allStarEnabled"; // ON/OFF保存
-let allStarUnlocked = true;  // デバッグ中はtrue（課金化したらここを判定に）
-let allStarEnabled = false;  // ←これが「ON/OFF本体」
-
 /* =====================
-   ALL STAR（課金トグル）
+   ALL STAR（課金ロック付き ON/OFF）
+   ONなら「診断」も「チー娘」も全部オールスター
 ===================== */
+const ALLSTAR_ENABLED_KEY = "allStarEnabled"; // "1"=ON, "0" or null=OFF
+let allStarUnlocked = true;  // 今はデバッグでtrue（課金判定に差し替え予定）
+let allStarEnabled = false;  // ←ユーザーのON/OFF
 
-// デバッグ用：今は常に解放
-let allStarUnlocked = true;
-
-// ユーザーがON/OFFする状態
-let allStarEnabled = false;
-  
 /* バッグ方式（連続抑制） */
 let allStarBag = [];
 let allStarLastKey = "";
-function refillAllStarBag(){
-  const keys = getUnlockedGirls().filter(k=>{
+
+function getAllStarKeysAvailable(){
+  const unlocked = getUnlockedGirls(); // ["A","B","C"] etc
+  return unlocked.filter(k=>{
     const g = getGirlByKey(k);
-    return g && !g.locked && g.normal && g.normal.length; // lite排除
+    return g && !g.locked && Array.isArray(g.normal) && g.normal.length > 0; // D/E/Fは除外
   });
-  allStarBag = shuffle(keys);
+}
+
+function refillAllStarBag(){
+  const keys = shuffle(getAllStarKeysAvailable());
+  allStarBag = keys;
   if(allStarBag.length >= 2 && allStarBag[0] === allStarLastKey){
     [allStarBag[0], allStarBag[1]] = [allStarBag[1], allStarBag[0]];
   }
 }
+
 function nextAllStarKey(){
   if(!allStarBag.length) refillAllStarBag();
   const k = allStarBag.shift();
   allStarLastKey = k || "";
-  return k || "A";
+  return k || getSavedGirl();
 }
+
+/* ON/OFFトグル（課金ロック付き） */
+function setAllStarEnabled(next){
+  allStarEnabled = !!next;
+  try{ localStorage.setItem(ALLSTAR_ENABLED_KEY, allStarEnabled ? "1" : "0"); }catch(e){}
+}
+
+function toggleAllStarEnabled(){
+  if(!allStarUnlocked){
+    alert("オールスターモードは課金で解放されます");
+    return;
+  }
+  setAllStarEnabled(!allStarEnabled);
+}
+
+/* その「問/ステージ」で出るキャラ */
 function pickGirlForPlay(){
-  if(!isAllStar) return getSelectedGirl();
+  if(!allStarEnabled) return getSelectedGirl();
   const k = nextAllStarKey();
   return getGirlByKey(k) || getSelectedGirl();
 }
-
+  
 /* この「問」で出るキャラを固定（chee演出に引き継ぐ） */
 let playGirl = null;
 function setPlayGirl(g){ playGirl = g; }
