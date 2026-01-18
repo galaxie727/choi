@@ -473,7 +473,13 @@ function getUnlockedGirls(){
 function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
 function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
+function toggleAllStar(){
+  if(!allStarUnlocked){
+    alert("オールスターモードは課金で解放されます");
+    return;
+  }
+  allStarEnabled = !allStarEnabled;
+}
 /* girls */
 function makeGirl(prefix, key, name, locked=false, chiOverText="……"){
   const normal = Array.from({length:15}, (_,i)=> `${prefix}_normal_${String(i+1).padStart(2,"0")}.png`);
@@ -641,9 +647,16 @@ let isNewRecordRun = false;
 
 let previewBgKey = getPreviewKey() || "";
 
-/* allstar */
-let isAllStar = false;
+/* =====================
+   ALL STAR（課金トグル）
+===================== */
 
+// デバッグ用：今は常に解放
+let allStarUnlocked = true;
+
+// ユーザーがON/OFFする状態
+let allStarEnabled = false;
+  
 /* バッグ方式（連続抑制） */
 let allStarBag = [];
 let allStarLastKey = "";
