@@ -1250,7 +1250,6 @@ document.getElementById("btnModeBack").onclick = ()=>{ goGirlSelect(); };
 
 document.getElementById("btnStartQuiz").onclick = ()=>{ isAllStar = false; restart("quiz"); };
 document.getElementById("btnStartChee").onclick = ()=>{ isAllStar = false; restart("cheeOnly"); };
-document.getElementById("btnStartAllStar").onclick = ()=>{
   isAllStar = true;
   allStarBag = [];
   allStarLastKey = "";
@@ -1266,11 +1265,7 @@ function init(){
   if(pk) previewBgKey = pk;
   goTop();
 }
-init();
-  // init() の中に追加（どこでもOK）
-try{
-  allStarEnabled = localStorage.getItem(ALLSTAR_ENABLED_KEY) === "1";
-}catch(e){}
+init(try{ allStarEnabled = ... }catch(e){});
 </script>
 </body>
 </html>
