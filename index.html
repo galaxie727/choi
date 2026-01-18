@@ -1263,8 +1263,18 @@ function init(){
   setGirlAndModeBgToSelectedTop();
   const pk = getPreviewKey();
   if(pk) previewBgKey = pk;
-  goTop();
 }
+
+function goTop(){
+  stopCheeTimer();
+  resetCheeVisuals();
+  mode="quiz"; ended=false; locked=false; cheeCooldown=false;
+  playGirl=null;
+  counterEl.textContent="-";
+  refreshBestLine();
+  showOnly(topScreen);
+}
+  
 init(try{ allStarEnabled = ... }catch(e){});
 </script>
 </body>
