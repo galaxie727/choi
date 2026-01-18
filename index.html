@@ -647,6 +647,13 @@ let isNewRecordRun = false;
 
 let previewBgKey = getPreviewKey() || "";
 
+  /* =====================
+   ALL STAR（ONなら全部適用）
+===================== */
+const ALLSTAR_ENABLED_KEY = "allStarEnabled"; // ON/OFF保存
+let allStarUnlocked = true;  // デバッグ中はtrue（課金化したらここを判定に）
+let allStarEnabled = false;  // ←これが「ON/OFF本体」
+
 /* =====================
    ALL STAR（課金トグル）
 ===================== */
@@ -1246,6 +1253,10 @@ function init(){
   goTop();
 }
 init();
+  // init() の中に追加（どこでもOK）
+try{
+  allStarEnabled = localStorage.getItem(ALLSTAR_ENABLED_KEY) === "1";
+}catch(e){}
 </script>
 </body>
 </html>
