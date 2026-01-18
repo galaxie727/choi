@@ -477,14 +477,7 @@ function getUnlockedGirls(){
 /* utils */
 function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5); }
 function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function toggleAllStar(){
-  if(!allStarUnlocked){
-    alert("オールスターモードは課金で解放されます");
-    return;
-  }
-  allStarEnabled = !allStarEnabled;
-}
+function pick(arr){ return arr[Math.floor(Math.random()*
 /* girls */
 function makeGirl(prefix, key, name, locked=false, chiOverText="……"){
   const normal = Array.from({length:15}, (_,i)=> `${prefix}_normal_${String(i+1).padStart(2,"0")}.png`);
@@ -694,6 +687,14 @@ function nextAllStarKey(){
 function setAllStarEnabled(next){
   allStarEnabled = !!next;
   try{ localStorage.setItem(ALLSTAR_ENABLED_KEY, allStarEnabled ? "1" : "0"); }catch(e){}
+}
+
+function toggleAllStarEnabled(){
+  if(!allStarUnlocked){
+    alert("オールスターモードは課金で解放されます");
+    return;
+  }
+  setAllStarEnabled(!allStarEnabled);
 }
 
 /* その「問/ステージ」で出るキャラ */
@@ -1245,7 +1246,7 @@ function restart(modeName){
     cheeStage = 1;
     lastGyuuIndex = -1;
     counterEl.textContent = `ステージ${cheeStage}`;
-    setPlayGirl(getSelectedGirl()); // チー娘は固定
+    setPlayGirl(pickGirlForPlay()); // ONならオールスター、OFFなら選択中
     startCheeBattle(cheeOnlyPickStage());
   }else{
     i=0;
