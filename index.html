@@ -1069,8 +1069,10 @@ function nextCheeOnlyAfterWin(){
     isNewRecordRun = true;
   }
 
-  // ★ここが重要：オールスターONなら毎ステージごとに出演キャラを引き直す
-  setPlayGirl(pickGirlForPlay());
+  // ★ オールスターONのときだけ女の子を更新
+  if(allStarEnabled){
+    setPlayGirl(pickGirlForPlay());
+  }
 
   startCheeBattle(cheeOnlyPickStage());
 }
