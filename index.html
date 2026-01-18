@@ -1248,34 +1248,25 @@ document.getElementById("btnGirlBack").onclick = ()=>{ goTop(); };
 document.getElementById("btnGoMode").onclick = ()=>{ goModeSelect(); };
 document.getElementById("btnModeBack").onclick = ()=>{ goGirlSelect(); };
 
-document.getElementById("btnStartQuiz").onclick = ()=>{ isAllStar = false; restart("quiz"); };
-document.getElementById("btnStartChee").onclick = ()=>{ isAllStar = false; restart("cheeOnly"); };
-  isAllStar = true;
-  allStarBag = [];
-  allStarLastKey = "";
-  restart("quiz");
-};
+document.getElementById("btnStartQuiz").onclick = ()=>{ restart("quiz"); };
+document.getElementById("btnStartChee").onclick = ()=>{ restart("cheeOnly"); };
 
 function init(){
   selectedGirlKey = getSavedGirl();
   preloadTops();
   refreshBestLine();
   setGirlAndModeBgToSelectedTop();
+
   const pk = getPreviewKey();
   if(pk) previewBgKey = pk;
+
+  // allStarEnabled を保存状態から復元
+  try{
+    allStarEnabled = localStorage.getItem(ALLSTAR_ENABLED_KEY) === "1";
+  }catch(e){}
 }
 
-function goTop(){
-  stopCheeTimer();
-  resetCheeVisuals();
-  mode="quiz"; ended=false; locked=false; cheeCooldown=false;
-  playGirl=null;
-  counterEl.textContent="-";
-  refreshBestLine();
-  showOnly(topScreen);
-}
-  
-init(try{ allStarEnabled = ... }catch(e){});
-</script>
+init();
+goTop();
 </body>
 </html>
