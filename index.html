@@ -847,7 +847,7 @@ function goTop(){
   stopCheeTimer();
   resetCheeVisuals();
   mode="quiz"; ended=false; locked=false; cheeCooldown=false;
-  isAllStar=false; playGirl=null;
+  playGirl=null;
   counterEl.textContent="-";
   refreshBestLine();
   showOnly(topScreen);
@@ -1230,7 +1230,6 @@ function restart(modeName){
   showOnly(gameScreen);
 
   if(gameMode === "cheeOnly"){
-    isAllStar = false; // チー娘モードはALLSTARなし（要望どおり）
     cheeStage = 1;
     lastGyuuIndex = -1;
     counterEl.textContent = `ステージ${cheeStage}`;
