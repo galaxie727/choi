@@ -400,9 +400,14 @@ header{
       <h1 class="titleBig">モードを選んでね</h1>
       <div class="subLine" id="bestLine">チー娘 BEST：ステージ0</div>
       <div class="modeBtns">
-        <button class="modeBtn" id="btnStartQuiz">チー牛診断</button>
-        <button class="modeBtn" id="btnStartChee">チー娘モード</button>
-      </div>
+  <button class="modeBtn" id="btnStartQuiz">チー牛診断</button>
+  <button class="modeBtn" id="btnStartChee">チー娘モード</button>
+
+  <button class="modeBtn" id="btnToggleAllStar">⭐ オールスター：OFF</button>
+  <div class="subLine" id="allStarNote" style="margin-top:-4px; opacity:.9;">
+    オールスターは課金で解放
+  </div>
+</div>
       <button class="smallBack" id="btnModeBack">女の子選択に戻る</button>
     </div>
   </div>
@@ -632,6 +637,9 @@ const flashEl     = document.getElementById("flash");
 const resultBox   = document.getElementById("resultBox");
 const resultPct   = document.getElementById("resultPct");
 
+const btnToggleAllStar = document.getElementById("btnToggleAllStar");
+const allStarNote = document.getElementById("allStarNote");
+
 /* state */
 let gameMode = "quiz";   // "quiz" or "cheeOnly"
 let mode = "quiz";       // "quiz" or "chee" or "result"
@@ -688,19 +696,21 @@ function setAllStarEnabled(next){
   try{ localStorage.setItem(ALLSTAR_ENABLED_KEY, allStarEnabled ? "1" : "0"); }catch(e){}
 }
 
-function toggleAllStarEnabled(){
-  if(!allStarUnlocked){
-    alert("オールスターモードは課金で解放されます");
-    return;
-  }
-  setAllStarEnabled(!allStarEnabled);
-}
-
 /* その「問/ステージ」で出るキャラ */
 function pickGirlForPlay(){
   if(!allStarEnabled) return getSelectedGirl();
   const k = nextAllStarKey();
   return getGirlByKey(k) || getSelectedGirl();
+}
+
+function refreshAllStarUI(){
+  if(!btnToggleAllStar) return;
+  btnToggleAllStar.textContent = `⭐ オールスター：${allStarEnabled ? "ON" : "OFF"}`;
+
+  // 課金状態に応じて注釈の出し分け（デバッグtrueでもOK）
+  if(allStarNote){
+    allStarNote.style.display = allStarUnlocked ? "none" : "block";
+  }
 }
   
 /* この「問」で出るキャラを固定（chee演出に引き継ぐ） */
@@ -859,9 +869,11 @@ function goGirlSelect(){
   else setGirlAndModeBgToSelectedTop();
   showOnly(girlScreen);
 }
+
 function goModeSelect(){
   refreshBestLine();
   setGirlAndModeBgToSelectedTop();
+  refreshAllStarUI();   // ←追加
   showOnly(modeScreen);
 }
 
@@ -1250,6 +1262,13 @@ document.getElementById("btnModeBack").onclick = ()=>{ goGirlSelect(); };
 document.getElementById("btnStartQuiz").onclick = ()=>{ restart("quiz"); };
 document.getElementById("btnStartChee").onclick = ()=>{ restart("cheeOnly"); };
 
+if(btnToggleAllStar){
+  btnToggleAllStar.onclick = ()=>{
+    toggleAllStarEnabled();
+    refreshAllStarUI();
+  };
+}
+  
 function init(){
   selectedGirlKey = getSavedGirl();
   preloadTops();
@@ -1263,6 +1282,7 @@ function init(){
   try{
     allStarEnabled = localStorage.getItem(ALLSTAR_ENABLED_KEY) === "1";
   }catch(e){}
+  refreshAllStarUI();
 }
 
 init();
